@@ -1,26 +1,37 @@
 from flask import *
 from multiprocessing import *
-import botTool, discord, asyncio, time
+from discord.ext import commands
+import botTool, asyncio, time, random
 
 app = Flask(__name__)
-client = discord.Client()
+bot = commands.Bot(command_prefix='!')
 isBot = "봇 대기중"
 botToken = botTool.getToken("config.json")  # string
 
-@client.event
+@bot.event
 async def on_ready():
-    print("{0.user} 로그인 성공!".format(client))
+    print("{} => 로그인 성공!".format(bot.user))
 
-@client.event
+@bot.event
 async def on_message(message):
-    if message.author == client.user:
+    await bot.process_commands(message) # bot event와 command를 같이 쓰기위해 필수로 넣어야
+    if message.author == bot.user:
         return
 
     if message.content.startswith("ㄹㅇㅋㅋ"):
         await message.channel.send("ㄹㅇㅋㅋ만 치셈")
 
-botTh = Process(target=client.run, args=(botToken,))
+@bot.command(name = "roll")
+async def roll(ctx, *args):
+    strlist = list(args)
+    await ctx.send("🎊 {} 🎉".format(strlist[random.randint(0, len(strlist)-1)]))
 
+@bot.command(name = "룰렛")
+async def roll(ctx, *args):
+    strlist = list(args)
+    await ctx.send("🎊 {} 🎉".format(strlist[random.randint(0, len(strlist)-1)]))
+
+botTh = Process(target=bot.run, args=(botToken,))
 if botToken is not None:
     botTh.start()
     isBot = "봇이 실행중입니다."
@@ -49,7 +60,4 @@ if __name__ == '__main__':
     - 이번주 예상 1등 로또번호를 알려줍니다.
     * Tell expected 1st Win Korean Lottery number in Channel
 
-    1. !랜덤 요소1, 요소2, 요소3... | !random ele1, ele2, ele3...
-    - 임의로 하나를 선택해줍니다.
-    * Choose one among what you enter elements
 '''
