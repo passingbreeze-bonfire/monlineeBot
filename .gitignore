@@ -19,5 +19,5 @@ crashlytics.properties
 crashlytics-build.properties
 fabric.properties
 
-idea/
-venv/
+.idea/
+./venv/
