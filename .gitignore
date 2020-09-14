@@ -105,4 +105,7 @@ pyvenv.cfg
 .venv
 pip-selfcheck.json
 
+# config file
+
+config.json
 # End of https://www.toptal.com/developers/gitignore/api/pycharm+all,venv

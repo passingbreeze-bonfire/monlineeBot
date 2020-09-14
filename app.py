@@ -1,15 +1,57 @@
-from flask import Flask
+from flask import *
+from multiprocessing import *
+import discord, asyncio, json, io, time
+
+def getToken(tokenFname):
+    token = None
+    with io.StringIO() as strbuf:
+        if not isinstance(tokenFname, str):
+            strbuf.write("올바른 문자열이 아닙니다")
+        else :
+            try:
+                with open(tokenFname, "r") as twrap:
+                    tokenWrap = json.load(twrap)
+                    token = tokenWrap["token"]
+            except FileNotFoundError :
+                strbuf.write("토큰을 불러오지 못했습니다.")
+        print(strbuf.getvalue())
+    return token
 
 app = Flask(__name__)
+client = discord.Client()
+isBot = "봇 대기중"
+botToken = getToken("config.json")  # string
 
+@client.event
+async def on_ready():
+    print("{0.user} 로그인 성공!".format(client))
+
+@client.event
+async def on_message(message):
+    if message.author == client.user:
+        return
+
+    if message.content.startswith("ㄹㅇㅋㅋ"):
+        await message.channel.send("ㄹㅇㅋㅋ만 치셈")
+
+botTh = Process(target=client.run, args=(botToken,))
+
+if botToken is not None:
+    botTh.start()
+    isBot = "봇이 실행중입니다."
+else:
+    isBot = "봇이 실행되고 있지 않습니다."
 
 @app.route('/')
-def hello_world():
-    return 'Hello World!'
-
+def exe_bot():
+    return "{0} : 서버가 구동중입니다. // {1}".format(time.strftime("%c", time.localtime(time.time())),isBot)
 
 if __name__ == '__main__':
-    app.run()
+    flaskTh = Process(target=app.run)
+    flaskTh.start()
+    botTh.join()
+    flaskTh.join()
+
 
 '''
     1. !틀어줘 노래제목/유튜브 링크 | !music title/youtube link
