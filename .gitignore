@@ -104,8 +104,11 @@ modules.xml
 pyvenv.cfg
 .venv
 pip-selfcheck.json
+# End of https://www.toptal.com/developers/gitignore/api/pycharm+all,venv
 
 # config file
-
 config.json
-# End of https://www.toptal.com/developers/gitignore/api/pycharm+all,venv
+youtube.json
+
+# test source file
+exapp.py
