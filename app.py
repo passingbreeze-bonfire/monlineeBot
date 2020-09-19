@@ -4,7 +4,7 @@ from discord.ext import commands
 from discord.utils import get
 from discord import FFmpegPCMAudio, guild
 from passlib.hash import pbkdf2_sha512
-import discord, asyncio, time, random, json, os, youtube_dl
+import discord, io, asyncio, time, random, json, os
 
 import botTool
 
@@ -18,6 +18,8 @@ async def on_ready():
 
 @bot.event
 async def on_disconnect():
+    if vc and vc.is_connected():
+        await vc.disconnect()
     print("봇 : {} => 로그아웃...".format(bot.user))
 
 @bot.event
@@ -61,8 +63,14 @@ async def getidpw(ctx, *args):
 
 @bot.command(name = "play")
 async def play(ctx, *args):
-    songlist = asyncio.Queue()
+    downloadedfiles = os.listdir("./music")
+    while len(downloadedfiles) != 0:
+        os.remove("./music/{}".format(downloadedfiles.pop()))
+    global songlist, urllist
+    songlist = []
+    urllist = []
     try :
+        global uservoice, vc
         uservoice = ctx.author.voice.channel
         vc = get(bot.voice_clients, guild=ctx.guild)
         if vc and vc.is_connected():
@@ -79,15 +87,20 @@ async def play(ctx, *args):
             'format': 'bestaudio/best',
             'extractaudio': True,
             'audioformat': 'mp3',
-            'outtmpl': u'music/%(playlist_index)s-%(title)s.%(ext)s',
+            'outtmpl': u'music/%(title)s.%(ext)s',
             'postprocessors': [{
                 'key': 'FFmpegExtractAudio',
                 'preferredcodec': 'mp3',
                 'preferredquality': '192'
             }],
         }
-        if (len(args) == 3):
-            print(args[0], args[1], ytidpw[args[0]])
+        if (len(args) == 0):
+            await ctx.send("{유튜브 링크}나 봇에 등록된 {유튜브 아이디 비밀번호 유튜브 링크}를 입력해주세요")
+        elif (len(args) == 1):
+            url = args[0]
+        elif (len(args) == 2):
+            await ctx.send("링크만 입력해주세요.")
+        else:
             ydlID = args[0]
             ydlPW = ytidpw[args[0]]
             if pbkdf2_sha512.verify(args[1], ydlPW):
@@ -95,67 +108,42 @@ async def play(ctx, *args):
             else:
                 await ctx.send("비밀번호가 맞지 않습니다. \n passwd not corrected!")
                 return
-            ydl_opt = {
-                'username': ydlID,
-                'password': ydlPW,
-                'format': 'bestaudio/best',
-                'extractaudio': True,
-                'audioformat': 'mp3',
-                'outtmpl': u'music/%(playlist_index)s-%(title)s.%(ext)s',
-                'postprocessors': [{
-                    'key': 'FFmpegExtractAudio',
-                    'preferredcodec': 'mp3',
-                    'preferredquality': '192'
-                }],
-            }
+            ydl_opt['username'] = ydlID
+            ydl_opt['password'] = ydlPW
             url = args[2]
-        elif (len(args) == 2):
-            await ctx.send("링크만 입력해주세요.")
-        else:
-            url = args[0]
-
-        with youtube_dl.YoutubeDL(ydl_opt) as ydl:
-            ydl.download([url])
-
-        for file in os.listdir("./music"):
-            if file.endswith(".mp3"):
-                songlist.put_nowait("./music/" + file)
-
-        if not songlist.empty():
-            vc.play(discord.FFmpegPCMAudio(songlist.get()))
-            vc.volume = 100
-            print(vc.is_playing())
-            time.sleep(10)
+        await botTool.getSonglist(songlist, urllist, ydl_opt, url)
+        await botTool.playYTlist(songlist, urllist, uservoice, vc, ydl_opt)
 
     except AttributeError:
         await ctx.message.delete()
         await ctx.send("음성채널에 있어야 실행됩니다.\n Only available when connected Voice Channel")
         return
 
+@bot.command(name = "nowplay")
+async def showlist(ctx):
+    plist = ""
+    with io.StringIO() as strbuf:
+        strbuf.write("> **🎙 Now Playing.. 🎙**\n")
+        strbuf.write("> *{}*\n\n".format(songlist[0]))
+        if len(songlist) > 0:
+            strbuf.write("> **💿 Playlist 💿**\n")
+            for i in range(1,len(songlist)+1):
+                strbuf.write("> {}. {}\n".format(i, songlist[i-1]))
+        plist = strbuf.getvalue()
+    await ctx.send(plist)
+
 @bot.command(name = "stop")
 async def stop(ctx):
-    uservoice = ctx.author.voice.channel
-    vc = get(bot.voice_clients, guild=ctx.guild)
     if vc and vc.is_connected():
         await vc.disconnect()
         await ctx.send("음악 재생을 멈춥니다.")
+        downloadedfiles = os.listdir("./music")
+        while len(downloadedfiles) != 0:
+            if len(downloadedfiles) == 0:
+                break
+            os.remove(downloadedfiles.pop())
     else :
         await ctx.send("음성채널에 없습니다.")
-
-    # song_there = os.path.isfile("song.mp3")
-    # try :
-    #     if song_there:
-    #         os.remove("song.mp3")
-    # except PermissionError:
-    #     await ctx.send("잠시 기다리면 음악이 재생됩니다. !나감 || !stop을 입력하면 재생을 중단합니다.")
-    #     return
-
-''' bot이 개인 사용자에게 보내는 메시지 코드
-@bot.command(name = "poke")
-async def poke(ctx):
-    await ctx.author.send("boop!")
-'''
-
 
 @app.route("/")
 async def exe_bot(request):
@@ -177,13 +165,7 @@ if __name__ == '__main__':
     serverTh.join()
 
 
-'''
-    1. !틀어줘 노래제목/유튜브 링크 | !music title/youtube link
-    - 유튜브 링크가 아니면 동작하지 않습니다
-    * Only available youtube link
-    - 유튜브에서 듣고싶은 음악 혹은 플레이리스트를 찾아서 틀어줍니다. 라디오 모드로 링크가 재생됩니다.
-    * Find music or playlist what you wanna hear in Youtube, playing it only radio mode
-    
+'''    
     1. !로또 | !lotto
     - 이번주 예상 1등 로또번호를 알려줍니다.
     * Tell expected 1st Win Korean Lottery number in Channel
