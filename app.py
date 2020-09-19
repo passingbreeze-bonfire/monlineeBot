@@ -41,7 +41,7 @@ async def roll(ctx, *args):
     await ctx.send("🎊 {} 🎉".format(strlist[random.randint(0, len(strlist)-1)]))
 
 @bot.command(name = "룰렛")
-async def 룰렛(ctx):
+async def korroll(ctx):
     await roll.invoke(ctx)
 
 @bot.command(name = "ytidpw")
@@ -112,7 +112,7 @@ async def play(ctx, *args):
             ydl_opt['password'] = ydlPW
             url = args[2]
         await botTool.getSonglist(songlist, urllist, ydl_opt, url)
-        await botTool.playYTlist(songlist, urllist, uservoice, vc, ydl_opt)
+        await botTool.playYTlist(ctx, songlist, urllist, uservoice, vc, ydl_opt)
 
     except AttributeError:
         await ctx.message.delete()
