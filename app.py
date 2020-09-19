@@ -87,7 +87,6 @@ async def play(ctx, *args):
             'format': 'bestaudio/best',
             'extractaudio': True,
             'audioformat': 'mp3',
-            'outtmpl': u'music/%(title)s.%(ext)s',
             'postprocessors': [{
                 'key': 'FFmpegExtractAudio',
                 'preferredcodec': 'mp3',
@@ -128,7 +127,7 @@ async def showlist(ctx):
         if len(songlist) > 0:
             strbuf.write("> **💿 Playlist 💿**\n")
             for i in range(1,len(songlist)+1):
-                strbuf.write("> {}. {}\n".format(i, songlist[i-1]))
+                strbuf.write("> {}. __{}__\n".format(i, songlist[i-1]))
         plist = strbuf.getvalue()
     await ctx.send(plist)
 

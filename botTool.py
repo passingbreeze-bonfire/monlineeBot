@@ -35,7 +35,7 @@ async def playYTlist(ctx,songlist:list, urllist:list, uservoice, vc, ydl_opt):
             else:
                 vc = await uservoice.connect()
             await ctx.send("음악 재생 시작!")
-            vc.play(discord.FFmpegPCMAudio(info['formats'][0]['url']))
+            vc.play(discord.FFmpegPCMAudio(info['formats'][0]['url'], before_options="-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5"))
             vc.volume = 80
             if vc.is_playing():
                 await asyncio.sleep(info['duration']+5)
