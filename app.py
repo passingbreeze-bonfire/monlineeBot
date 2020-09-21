@@ -11,7 +11,6 @@ app = Sanic(__name__)
 bot = commands.Bot(command_prefix='!')
 isBot = "봇 대기중"
 
-
 @bot.event
 async def on_command_error(ctx, error):
     if isinstance(error, commands.CommandNotFound):
@@ -92,6 +91,7 @@ async def play(ctx, *args):
             'format': 'bestaudio/best',
             'extractaudio': True,
             'audioformat': 'mp3',
+            'cookiefile': "cookies.txt",
             'default_search':'ytsearch',
             'sleep_interval' : 10,
             'max_sleep_interval' : 60,
