@@ -14,7 +14,8 @@ def getToken(tokenFname):
                 strbuf.write("토큰을 불러오지 못했습니다.")
     return token
 
-async def getSonglist(songlist:list, urllist:list, ydl_opt, url):
+async def getSonglist(ctx,songlist:list, urllist:list, ydl_opt, url):
+    await ctx.send("재생 목록 받아오는 중...")
     with youtube_dl.YoutubeDL(ydl_opt) as ydl:
         info = ydl.extract_info(url, download=False)
         if 'entries' in info:
@@ -26,7 +27,8 @@ async def getSonglist(songlist:list, urllist:list, ydl_opt, url):
             songlist.append(info['title'])
             urllist.append(info['webpage_url'])
 
-async def playYTlist(ctx,songlist:list, urllist:list, uservoice, vc, ydl_opt):
+async def playYTlist(ctx, songlist:list, urllist:list, uservoice, vc, ydl_opt):
+    await ctx.send("🎧 음악 재생 시작 🎧")
     with youtube_dl.YoutubeDL(ydl_opt) as ydl:
         while len(urllist) > 0 and len(songlist) > 0:
             info = ydl.extract_info(urllist.pop(0), download=False)
@@ -34,27 +36,13 @@ async def playYTlist(ctx,songlist:list, urllist:list, uservoice, vc, ydl_opt):
                 await vc.move_to(uservoice)
             else:
                 vc = await uservoice.connect()
-            await ctx.send("음악 재생 시작!")
-            vc.play(discord.FFmpegPCMAudio(info['formats'][0]['url'], before_options="-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5"))
+            vc.play(discord.FFmpegPCMAudio(info['formats'][0]['url'], before_options="-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5", options="-vn"))
             vc.volume = 80
             if vc.is_playing():
-                await asyncio.sleep(info['duration']+5)
+                await asyncio.sleep(info['duration']+20)
             songlist.pop(0)
-
-# async def playYTlist(songlist:list, urllist:list, uservoice, vc, ydl_opt):
-#     with youtube_dl.YoutubeDL(ydl_opt) as ydl:
-#         while len(urllist) > 0 and len(songlist) > 0:
-#             info = ydl.extract_info(urllist.pop(0), download=True)
-#             if vc and vc.is_connected():
-#                 await vc.move_to(uservoice)
-#             else:
-#                 vc = await uservoice.connect()
-#             playfile = "./music/{}".format(os.listdir("./music").pop())
-#             vc.play(discord.FFmpegPCMAudio(playfile))
-#             vc.volume = 80
-#             if vc.is_playing():
-#                 await asyncio.sleep(info['duration']+5)
-#             songlist.pop(0)
-#             if os.path.isfile(playfile):
-#                 os.remove(playfile)
+    if len(songlist) == 0:
+        await vc.disconnect()
+        await asyncio.sleep(20)
+        await ctx.send("추가된 재생목록이 없으므로 음성채널에서 나갑니다.")
 

@@ -2,9 +2,8 @@ from sanic import Sanic, response
 from multiprocessing import *
 from discord.ext import commands
 from discord.utils import get
-from discord import FFmpegPCMAudio, guild
 from passlib.hash import pbkdf2_sha512
-import discord, io, asyncio, time, random, json, os
+import discord, io, asyncio, time, random, json
 
 import botTool
 
@@ -20,7 +19,9 @@ async def on_ready():
 async def on_disconnect():
     if vc and vc.is_connected():
         await vc.disconnect()
-    print("봇 : {} => 로그아웃...".format(bot.user))
+    await bot.logout()
+    await asyncio.sleep(20)
+    await bot.login(botTool.getToken("config.json"))
 
 @bot.event
 async def on_message(message):
@@ -30,10 +31,6 @@ async def on_message(message):
 
     if message.content.startswith("ㄹㅇㅋㅋ"):
         await message.channel.send("ㄹㅇㅋㅋ만 치셈")
-
-@bot.event
-async def getPM(ctx):
-    print("{} from PM".format(ctx.content))
 
 @bot.command(name = "roll")
 async def roll(ctx, *args):
@@ -63,9 +60,6 @@ async def getidpw(ctx, *args):
 
 @bot.command(name = "play")
 async def play(ctx, *args):
-    downloadedfiles = os.listdir("./music")
-    while len(downloadedfiles) != 0:
-        os.remove("./music/{}".format(downloadedfiles.pop()))
     global songlist, urllist
     songlist = []
     urllist = []
@@ -85,8 +79,10 @@ async def play(ctx, *args):
         url = ""
         ydl_opt = {
             'format': 'bestaudio/best',
-            'extractaudio': True,
-            'audioformat': 'mp3',
+            'ignoreerrors' : False,
+            'cookiefile' : "cookies.txt",
+            'sleep_interval' : 10,
+            'max_sleep_interval' : 60,
             'postprocessors': [{
                 'key': 'FFmpegExtractAudio',
                 'preferredcodec': 'mp3',
@@ -110,13 +106,12 @@ async def play(ctx, *args):
             ydl_opt['username'] = ydlID
             ydl_opt['password'] = ydlPW
             url = args[2]
-        await botTool.getSonglist(songlist, urllist, ydl_opt, url)
+        await botTool.getSonglist(ctx,songlist, urllist, ydl_opt, url)
         await botTool.playYTlist(ctx, songlist, urllist, uservoice, vc, ydl_opt)
 
     except AttributeError:
         await ctx.message.delete()
         await ctx.send("음성채널에 있어야 실행됩니다.\n Only available when connected Voice Channel")
-        return
 
 @bot.command(name = "nowplay")
 async def showlist(ctx):
@@ -131,18 +126,18 @@ async def showlist(ctx):
         plist = strbuf.getvalue()
     await ctx.send(plist)
 
+@bot.command(name = "틀어줘")
+async def playkor(ctx):
+    await play.invoke(ctx)
+
 @bot.command(name = "stop")
 async def stop(ctx):
     if vc and vc.is_connected():
         await vc.disconnect()
         await ctx.send("음악 재생을 멈춥니다.")
-        downloadedfiles = os.listdir("./music")
-        while len(downloadedfiles) != 0:
-            if len(downloadedfiles) == 0:
-                break
-            os.remove(downloadedfiles.pop())
     else :
         await ctx.send("음성채널에 없습니다.")
+
 
 @app.route("/")
 async def exe_bot(request):

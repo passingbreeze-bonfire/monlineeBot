@@ -109,6 +109,7 @@ pip-selfcheck.json
 # config file
 config.json
 youtube.json
+cookies.txt
 
 # test source file
 exapp.py
