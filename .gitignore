@@ -113,3 +113,6 @@ cookies.txt
 
 # test source file
 exapp.py
+
+# log files
+logs/

@@ -27,7 +27,7 @@ async def getSonglist(ctx,songlist:list, urllist:list, ydl_opt, url):
             songlist.append(info['title'])
             urllist.append(info['webpage_url'])
 
-async def playYTlist(ctx, songlist:list, urllist:list, uservoice, vc, ydl_opt):
+async def playYTlist(bot, ctx, uservoice, vc, songlist:list, urllist:list, ydl_opt, aftercoro):
     await ctx.send("🎧 음악 재생 시작 🎧")
     with youtube_dl.YoutubeDL(ydl_opt) as ydl:
         while len(urllist) > 0 and len(songlist) > 0:
@@ -36,11 +36,12 @@ async def playYTlist(ctx, songlist:list, urllist:list, uservoice, vc, ydl_opt):
                 await vc.move_to(uservoice)
             else:
                 vc = await uservoice.connect()
-            vc.play(discord.FFmpegPCMAudio(info['formats'][0]['url'], before_options="-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5", options="-vn"))
+            vc.play(discord.FFmpegPCMAudio(info['formats'][0]['url'], before_options="-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5", options="-vn"), after=aftercoro)
             vc.volume = 80
             if vc.is_playing():
                 await asyncio.sleep(info['duration']+20)
             songlist.pop(0)
+
     if len(songlist) == 0:
         await vc.disconnect()
         await asyncio.sleep(20)

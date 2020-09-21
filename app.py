@@ -11,6 +11,21 @@ app = Sanic(__name__)
 bot = commands.Bot(command_prefix='!')
 isBot = "봇 대기중"
 
+def aftercoro(error):
+    try:
+        coro = asyncio.run_coroutine_threadsafe(botTool.playYTlist, bot.loop)
+        coro.result()
+    except Exception as e:
+        print(e)
+
+@bot.event
+async def on_command_error(ctx, error):
+    if isinstance(error, commands.CommandNotFound):
+        await ctx.send("😱 없는 명령어입니다. 😱")
+    if isinstance(error, commands.CommandInvokeError):
+        await ctx.send("명령을 실행하던 중에 오류가 발생했습니다. 😭")
+        print(error)
+
 @bot.event
 async def on_ready():
     print("봇 : {} => 로그인!".format(bot.user))
@@ -60,11 +75,12 @@ async def getidpw(ctx, *args):
 
 @bot.command(name = "play")
 async def play(ctx, *args):
-    global songlist, urllist
-    songlist = []
-    urllist = []
+    global after
+    after = aftercoro
     try :
-        global uservoice, vc
+        global uservoice, vc, ydl_opt, songlist, urllist
+        songlist = []
+        urllist = []
         uservoice = ctx.author.voice.channel
         vc = get(bot.voice_clients, guild=ctx.guild)
         if vc and vc.is_connected():
@@ -79,8 +95,10 @@ async def play(ctx, *args):
         url = ""
         ydl_opt = {
             'format': 'bestaudio/best',
+            'extractaudio': True,
             'ignoreerrors' : False,
-            'cookiefile' : "cookies.txt",
+            'audioformat': 'mp3',
+            'default_search':'ytsearch',
             'sleep_interval' : 10,
             'max_sleep_interval' : 60,
             'postprocessors': [{
@@ -91,6 +109,7 @@ async def play(ctx, *args):
         }
         if (len(args) == 0):
             await ctx.send("{유튜브 링크}나 봇에 등록된 {유튜브 아이디 비밀번호 유튜브 링크}를 입력해주세요")
+            return
         elif (len(args) == 1):
             url = args[0]
         elif (len(args) == 2):
@@ -106,8 +125,8 @@ async def play(ctx, *args):
             ydl_opt['username'] = ydlID
             ydl_opt['password'] = ydlPW
             url = args[2]
-        await botTool.getSonglist(ctx,songlist, urllist, ydl_opt, url)
-        await botTool.playYTlist(ctx, songlist, urllist, uservoice, vc, ydl_opt)
+        await botTool.getSonglist(ctx, songlist, urllist, ydl_opt, url)
+        await botTool.playYTlist(bot, ctx, uservoice, vc, songlist, urllist, ydl_opt, after)
 
     except AttributeError:
         await ctx.message.delete()
@@ -122,7 +141,7 @@ async def showlist(ctx):
         if len(songlist) > 0:
             strbuf.write("> **💿 Playlist 💿**\n")
             for i in range(1,len(songlist)+1):
-                strbuf.write("> {}. __{}__\n".format(i, songlist[i-1]))
+                strbuf.write("> {}. {}\n".format(i, songlist[i-1]))
         plist = strbuf.getvalue()
     await ctx.send(plist)
 
@@ -138,6 +157,27 @@ async def stop(ctx):
     else :
         await ctx.send("음성채널에 없습니다.")
 
+@bot.command(name = "그만")
+async def stopkor(ctx):
+    await stop.invoke(ctx)
+
+@bot.command(name = "skip")
+async def skip(ctx):
+    if len(songlist)>0 and len(urllist)>0:
+        if vc.is_playing():
+            vc.pause()
+        else:
+            await ctx.send("현재 음악을 재생하고 있지 않습니다.")
+            return
+        await ctx.send("다음곡이 재생됩니다. ➡️ 🎵 🎶")
+        songlist.pop(0)
+        await botTool.playYTlist(bot, ctx, uservoice, vc, songlist, urllist, ydl_opt, after)
+    else :
+        await ctx.send("재생할 음악이 없습니다.️🙅 ")
+
+@bot.command(name = "다음")
+async def skipkor(ctx):
+    await skip.invoke(ctx)
 
 @app.route("/")
 async def exe_bot(request):
