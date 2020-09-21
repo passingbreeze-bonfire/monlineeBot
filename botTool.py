@@ -28,7 +28,7 @@ async def getSonglist(ctx,songlist:list, urllist:list, ydl_opt, url):
             else:
                 songlist.append(info['title'])
                 urllist.append(info['webpage_url'])
-    except (utils.YoutubeDLError, utils.ExtractorError) as e:
+    except Exception as e:
         await ctx.send("음원을 받는 과정에서 다음의 오류가 발생하였습니다.\n ➡️ ", e)
 
 async def playYTlist(bot, ctx, uservoice, vc, songlist:list, urllist:list, ydl_opt):
@@ -59,7 +59,7 @@ async def playYTlist(bot, ctx, uservoice, vc, songlist:list, urllist:list, ydl_o
             await asyncio.sleep(20)
             await ctx.send("추가된 재생목록이 없으므로 음성채널에서 나갑니다.")
 
-    except (utils.YoutubeDLError, utils.ExtractorError) as e:
+    except Exception as e:
         await vc.disconnect()
         await asyncio.sleep(20)
         await ctx.send("음원을 받는 과정에서 다음의 오류가 발생하였습니다.\n ➡️ ", e)
