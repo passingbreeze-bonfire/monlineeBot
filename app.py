@@ -11,12 +11,6 @@ app = Sanic(__name__)
 bot = commands.Bot(command_prefix='!')
 isBot = "봇 대기중"
 
-def aftercoro(error):
-    try:
-        coro = asyncio.run_coroutine_threadsafe(botTool.playYTlist, bot.loop)
-        coro.result()
-    except Exception as e:
-        print(e)
 
 @bot.event
 async def on_command_error(ctx, error):
@@ -40,12 +34,15 @@ async def on_disconnect():
 
 @bot.event
 async def on_message(message):
-    await bot.process_commands(message) # bot event와 command를 같이 쓰기위해 필수로 넣어야
     if message.author == bot.user:
         return
-
     if message.content.startswith("ㄹㅇㅋㅋ"):
-        await message.channel.send("ㄹㅇㅋㅋ만 치셈")
+        channel = message.channel
+        def check(m):
+            return m.content == "ㄹㅇㅋㅋ" and m.channel == channel
+        msg = await bot.wait_for('message', check=check)
+        await channel.send("{}만 치셈 ㅋㅋ".format(msg))
+    await bot.process_commands(message) # bot event와 command를 같이 쓰기위해 필수로 넣어야
 
 @bot.command(name = "roll")
 async def roll(ctx, *args):
@@ -75,8 +72,6 @@ async def getidpw(ctx, *args):
 
 @bot.command(name = "play")
 async def play(ctx, *args):
-    global after
-    after = aftercoro
     try :
         global uservoice, vc, ydl_opt, songlist, urllist
         songlist = []
@@ -96,7 +91,6 @@ async def play(ctx, *args):
         ydl_opt = {
             'format': 'bestaudio/best',
             'extractaudio': True,
-            'ignoreerrors' : False,
             'audioformat': 'mp3',
             'default_search':'ytsearch',
             'sleep_interval' : 10,
@@ -126,7 +120,7 @@ async def play(ctx, *args):
             ydl_opt['password'] = ydlPW
             url = args[2]
         await botTool.getSonglist(ctx, songlist, urllist, ydl_opt, url)
-        await botTool.playYTlist(bot, ctx, uservoice, vc, songlist, urllist, ydl_opt, after)
+        await botTool.playYTlist(bot, ctx, uservoice, vc, songlist, urllist, ydl_opt)
 
     except AttributeError:
         await ctx.message.delete()
@@ -171,7 +165,7 @@ async def skip(ctx):
             return
         await ctx.send("다음곡이 재생됩니다. ➡️ 🎵 🎶")
         songlist.pop(0)
-        await botTool.playYTlist(bot, ctx, uservoice, vc, songlist, urllist, ydl_opt, after)
+        await botTool.playYTlist(bot, ctx, uservoice, vc, songlist, urllist, ydl_opt)
     else :
         await ctx.send("재생할 음악이 없습니다.️🙅 ")
 
