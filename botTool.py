@@ -1,5 +1,32 @@
 from youtube_dl import utils
-import json, io, discord, asyncio, youtube_dl
+import json, io, discord, asyncio, youtube_dl, time, logging
+import app
+
+# class ytLogger(object):
+#     def __init__(self):
+#         self.log = logging.getLogger("ytlog")
+bot = app.bot
+ydl_opt = {
+    'format': 'bestaudio/best',
+    'extractaudio': True,
+    'ignoreerrors': True,
+    'cookiefile': 'ytcookies.txt',
+    'default_search': 'ytsearch',
+    'sleep_interval': 10,
+    'max_sleep_interval': 60,
+    'postprocessors': [{
+        'key': 'FFmpegExtractAudio',
+        'preferredcodec': 'mp3',
+        'preferredquality': '192'
+    }],
+}
+
+# def aftercoro(error):
+#     try:
+#         coro = asyncio.run_coroutine_threadsafe(playYTlist, bot.loop)
+#         coro.result()
+#     except Exception as e:
+#         print("Error is", e)
 
 def getToken(tokenFname):
     token = None
@@ -15,7 +42,7 @@ def getToken(tokenFname):
                 strbuf.write("토큰을 불러오지 못했습니다.")
     return token
 
-async def getSonglist(ctx,songlist:list, urllist:list, ydl_opt, url):
+async def getSonglist(ctx, songlist:dict, url):
     await ctx.send("재생 목록 받아오는 중...")
     try :
         with youtube_dl.YoutubeDL(ydl_opt) as ydl:
@@ -23,36 +50,36 @@ async def getSonglist(ctx,songlist:list, urllist:list, ydl_opt, url):
             if 'entries' in info:
                 result = info['entries']
                 for i, item in enumerate(result):
-                    songlist.append(info['entries'][i]['title'])
-                    urllist.append(info['entries'][i]['webpage_url'])
+                    songlist[info['entries'][i]['title']] = info['entries'][i]['webpage_url']
             else:
-                songlist.append(info['title'])
-                urllist.append(info['webpage_url'])
+                songlist[info['title']] = info['webpage_url']
     except Exception as e:
         await ctx.send("음원을 받는 과정에서 다음의 오류가 발생하였습니다.\n ➡️ ", e)
 
-async def playYTlist(bot, ctx, uservoice, vc, songlist:list, urllist:list, ydl_opt):
+async def playYTlist(ctx, uservoice, vc, songlist:dict):
     await ctx.send("🎧 음악 재생 시작 🎧")
 
-    def aftercoro(error):
-        try:
-            coro = asyncio.run_coroutine_threadsafe(playYTlist, bot.loop)
-            coro.result()
-        except Exception as e:
-            print(e)
+    # def hookdl(d):
+    #     if d['status'] == 'finished':
+    #         bot.loop.create_task()
+    #     pass
+
+    # ydl_opt['progress_hooks'] = [hookdl]
+
     try:
+        titles = list(songlist.keys())
         with youtube_dl.YoutubeDL(ydl_opt) as ydl:
-            while len(urllist) > 0 and len(songlist) > 0:
-                info = ydl.extract_info(urllist.pop(0), download=False)
-                if vc and vc.is_connected():
-                    await vc.move_to(uservoice)
-                else:
-                    vc = await uservoice.connect()
-                vc.play(discord.FFmpegPCMAudio(info['formats'][0]['url'], before_options="-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5", options="-vn"), after=aftercoro)
-                vc.volume = 80
-                if vc.is_playing():
-                    await asyncio.sleep(info['duration']+20)
-                songlist.pop(0)
+            firstTitle = titles[0]
+            info = ydl.extract_info(songlist[firstTitle], download=False)
+            if vc and vc.is_connected():
+                await vc.move_to(uservoice)
+            else:
+                vc = await uservoice.connect()
+            vc.play(discord.FFmpegPCMAudio(info['formats'][0]['url'], before_options="-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5", options="-vn"))
+            vc.volume = 80
+            if vc.is_playing():
+                await asyncio.sleep(info['duration']+20)
+            songlist.pop(firstTitle)
 
         if len(songlist) == 0:
             await vc.disconnect()

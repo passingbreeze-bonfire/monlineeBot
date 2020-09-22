@@ -10,6 +10,7 @@ import botTool
 app = Sanic(__name__)
 bot = commands.Bot(command_prefix='!')
 isBot = "봇 대기중"
+playyt=None
 
 @bot.event
 async def on_command_error(ctx, error):
@@ -33,6 +34,7 @@ async def on_disconnect():
 
 @bot.event
 async def on_message(message):
+    await bot.process_commands(message)  # bot event와 command를 같이 쓰기위해 필수로 넣어야
     if message.author == bot.user:
         return
     if message.content.startswith("ㄹㅇㅋㅋ"):
@@ -40,8 +42,8 @@ async def on_message(message):
         def check(m):
             return m.content == "ㄹㅇㅋㅋ" and m.channel == channel
         msg = await bot.wait_for('message', check=check)
-        await channel.send("{}만 치셈 ㅋㅋ".format(msg))
-    await bot.process_commands(message) # bot event와 command를 같이 쓰기위해 필수로 넣어야
+        await channel.send("{.content}만 치셈 ㅋㅋ".format(msg))
+
 
 @bot.command(name = "roll")
 async def roll(ctx, *args):
@@ -72,9 +74,8 @@ async def getidpw(ctx, *args):
 @bot.command(name = "play")
 async def play(ctx, *args):
     try :
-        global uservoice, vc, ydl_opt, songlist, urllist
-        songlist = []
-        urllist = []
+        global uservoice, vc, ydl_opt, songlist
+        songlist = {}
         uservoice = ctx.author.voice.channel
         vc = get(bot.voice_clients, guild=ctx.guild)
         if vc and vc.is_connected():
@@ -87,20 +88,6 @@ async def play(ctx, *args):
             data = ytconf.read()
         ytidpw = json.loads(data)
         url = ""
-        ydl_opt = {
-            'format': 'bestaudio/best',
-            'extractaudio': True,
-            'audioformat': 'mp3',
-            'cookiefile': "cookies.txt",
-            'default_search':'ytsearch',
-            'sleep_interval' : 10,
-            'max_sleep_interval' : 60,
-            'postprocessors': [{
-                'key': 'FFmpegExtractAudio',
-                'preferredcodec': 'mp3',
-                'preferredquality': '192'
-            }],
-        }
         if (len(args) == 0):
             await ctx.send("{유튜브 링크}나 봇에 등록된 {유튜브 아이디 비밀번호 유튜브 링크}를 입력해주세요")
             return
@@ -116,11 +103,10 @@ async def play(ctx, *args):
             else:
                 await ctx.send("비밀번호가 맞지 않습니다. \n passwd not corrected!")
                 return
-            ydl_opt['username'] = ydlID
-            ydl_opt['password'] = ydlPW
+            botTool.ydl_opt['username'] = ydlID
+            botTool.ydl_opt['password'] = ydlPW
             url = args[2]
-        await botTool.getSonglist(ctx, songlist, urllist, ydl_opt, url)
-        await botTool.playYTlist(bot, ctx, uservoice, vc, songlist, urllist, ydl_opt)
+        playyt = await asyncio.gather(botTool.getSonglist(ctx, songlist, url), botTool.playYTlist(ctx, uservoice, vc, songlist))
 
     except AttributeError:
         await ctx.message.delete()
@@ -131,11 +117,13 @@ async def showlist(ctx):
     plist = ""
     with io.StringIO() as strbuf:
         strbuf.write("> **🎙 Now Playing.. 🎙**\n")
-        strbuf.write("> *{}*\n\n".format(songlist[0]))
+        strbuf.write("> *{}*\n\n".format(list(songlist.keys())[0]))
         if len(songlist) > 0:
             strbuf.write("> **💿 Playlist 💿**\n")
-            for i in range(1,len(songlist)+1):
-                strbuf.write("> {}. {}\n".format(i, songlist[i-1]))
+            i = 1
+            for title in songlist.keys():
+                strbuf.write("> {}. {}\n".format(i, title))
+                i += 1
         plist = strbuf.getvalue()
     await ctx.send(plist)
 
@@ -157,15 +145,15 @@ async def stopkor(ctx):
 
 @bot.command(name = "skip")
 async def skip(ctx):
-    if len(songlist)>0 and len(urllist)>0:
+    if len(songlist)>0:
         if vc.is_playing():
             vc.pause()
         else:
             await ctx.send("현재 음악을 재생하고 있지 않습니다.")
             return
         await ctx.send("다음곡이 재생됩니다. ➡️ 🎵 🎶")
-        songlist.pop(0)
-        await botTool.playYTlist(bot, ctx, uservoice, vc, songlist, urllist, ydl_opt)
+        songlist.pop(list(songlist.keys())[0])
+        await botTool.playYTlist(ctx, uservoice, vc, songlist)
     else :
         await ctx.send("재생할 음악이 없습니다.️🙅 ")
 
