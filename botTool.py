@@ -1,8 +1,4 @@
 import json, io, discord, asyncio, youtube_dl
-import app
-
-bot = app.bot
-ydl_opt = app.ydl_opt
 
 def getToken(tokenFname):
     token = None
@@ -18,7 +14,7 @@ def getToken(tokenFname):
                 strbuf.write("토큰을 불러오지 못했습니다.")
     return token
 
-async def getSonglist(ctx, songlist:dict, url):
+async def getSonglist(ctx, songlist:dict, ydl_opt, url):
     await ctx.send("재생 목록 받아오는 중...")
     try :
         with youtube_dl.YoutubeDL(ydl_opt) as ydl:
@@ -32,7 +28,7 @@ async def getSonglist(ctx, songlist:dict, url):
     except Exception as e:
         await ctx.send("음원을 받는 과정에서 다음의 오류가 발생하였습니다.\n ➡️ ", e)
 
-async def playYTlist(ctx, uservoice, vc, songlist:dict):
+async def playYTlist(bot, ctx, uservoice, vc, songlist:dict, ydl_opt):
     try:
         await ctx.send("🎧 음악 재생 시작 🎧")
         titles = list(songlist.keys())

@@ -117,10 +117,10 @@ async def play(ctx, *args):
             else:
                 await ctx.send("비밀번호가 맞지 않습니다. \n passwd not corrected!")
                 return
-            botTool.ydl_opt['username'] = ydlID
-            botTool.ydl_opt['password'] = ydlPW
+            ydl_opt['username'] = ydlID
+            ydl_opt['password'] = ydlPW
             url = args[2]
-        await asyncio.gather(botTool.getSonglist(ctx, songlist, url), botTool.playYTlist(ctx, uservoice, vc, songlist))
+        await asyncio.gather(botTool.getSonglist(ctx, songlist, ydl_opt, url), botTool.playYTlist(bot, ctx, uservoice, vc, songlist, ydl_opt))
 
     except AttributeError:
         await ctx.message.delete()
