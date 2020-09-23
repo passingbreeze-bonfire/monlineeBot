@@ -14,7 +14,7 @@ ydl_opt = {
     'format': 'bestaudio/best',
     'extractaudio': True,
     'ignoreerrors': True,
-    'cookiefile': 'ytcookies.txt',
+    'cookiefile': 'ytcookie.txt',
     'default_search': 'ytsearch',
     'sleep_interval': 10,
     'max_sleep_interval': 60,
