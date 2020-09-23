@@ -3,7 +3,7 @@ from multiprocessing import *
 from discord.ext import commands
 from discord.utils import get
 from passlib.hash import pbkdf2_sha512
-import discord, io, asyncio, time, random, json,youtube_dl
+import discord, io, asyncio, time, random, json, youtube_dl
 
 import botTool
 
@@ -97,7 +97,6 @@ async def play(ctx, *args):
         else:
             vc = await uservoice.connect()
         await ctx.message.delete()
-        await ctx.send("음악 준비중입니다...")
         with open("youtube.json", "r", encoding='utf-8') as ytconf:
             data = ytconf.read()
         ytidpw = json.loads(data)
@@ -120,6 +119,7 @@ async def play(ctx, *args):
             ydl_opt['username'] = ydlID
             ydl_opt['password'] = ydlPW
             url = args[2]
+        await ctx.send("음악 준비중입니다...")
         await asyncio.gather(botTool.getSonglist(ctx, songlist, ydl_opt, url), botTool.playYTlist(bot, ctx, uservoice, vc, songlist, ydl_opt))
 
     except AttributeError:
@@ -128,9 +128,9 @@ async def play(ctx, *args):
 
 @bot.command(name = "next")
 async def gonext(ctx):
-    firstTitle = list(songlist.keys())[0]
-    nextTitle = list(songlist.keys())[1]
-    if len(songlist)>0:
+    if len(songlist) > 1:
+        firstTitle = list(songlist.keys())[0]
+        nextTitle = list(songlist.keys())[1]
         if vc.is_playing():
             vc.pause()
         else:
@@ -143,7 +143,7 @@ async def gonext(ctx):
         vc.source = discord.FFmpegPCMAudio(info['formats'][0]['url'], before_options="-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5", options="-vn")
         vc.resume()
     else :
-        await ctx.send("재생할 음악이 없습니다.️🙅 ")
+        await ctx.send("다음 재생할 음악이 없습니다.️🙅 ")
 
 @bot.command(name = "다음")
 async def nextkor(ctx):
