@@ -1,32 +1,8 @@
-from youtube_dl import utils
-import json, io, discord, asyncio, youtube_dl, time, logging
+import json, io, discord, asyncio, youtube_dl
 import app
 
-# class ytLogger(object):
-#     def __init__(self):
-#         self.log = logging.getLogger("ytlog")
 bot = app.bot
-ydl_opt = {
-    'format': 'bestaudio/best',
-    'extractaudio': True,
-    'ignoreerrors': True,
-    'cookiefile': 'ytcookies.txt',
-    'default_search': 'ytsearch',
-    'sleep_interval': 10,
-    'max_sleep_interval': 60,
-    'postprocessors': [{
-        'key': 'FFmpegExtractAudio',
-        'preferredcodec': 'mp3',
-        'preferredquality': '192'
-    }],
-}
-
-# def aftercoro(error):
-#     try:
-#         coro = asyncio.run_coroutine_threadsafe(playYTlist, bot.loop)
-#         coro.result()
-#     except Exception as e:
-#         print("Error is", e)
+ydl_opt = app.ydl_opt
 
 def getToken(tokenFname):
     token = None
@@ -57,29 +33,31 @@ async def getSonglist(ctx, songlist:dict, url):
         await ctx.send("음원을 받는 과정에서 다음의 오류가 발생하였습니다.\n ➡️ ", e)
 
 async def playYTlist(ctx, uservoice, vc, songlist:dict):
-    await ctx.send("🎧 음악 재생 시작 🎧")
-
-    # def hookdl(d):
-    #     if d['status'] == 'finished':
-    #         bot.loop.create_task()
-    #     pass
-
-    # ydl_opt['progress_hooks'] = [hookdl]
-
     try:
+        await ctx.send("🎧 음악 재생 시작 🎧")
         titles = list(songlist.keys())
         with youtube_dl.YoutubeDL(ydl_opt) as ydl:
             firstTitle = titles[0]
             info = ydl.extract_info(songlist[firstTitle], download=False)
-            if vc and vc.is_connected():
-                await vc.move_to(uservoice)
-            else:
-                vc = await uservoice.connect()
-            vc.play(discord.FFmpegPCMAudio(info['formats'][0]['url'], before_options="-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5", options="-vn"))
-            vc.volume = 80
-            if vc.is_playing():
-                await asyncio.sleep(info['duration']+20)
-            songlist.pop(firstTitle)
+        if vc and vc.is_connected():
+            await vc.move_to(uservoice)
+        else:
+            vc = await uservoice.connect()
+
+        def playing(error):
+            try:
+                sleepcoro = asyncio.sleep(info['duration']+10)
+                future = asyncio.run_coroutine_threadsafe(sleepcoro, bot.loop)
+                if vc.is_paused():
+                    future.cancel()
+                else :
+                    songlist.pop(firstTitle)
+                future.result()
+            except Exception as e:
+                print("Error occurred when callback called : ", e)
+
+        vc.play(discord.FFmpegPCMAudio(info['formats'][0]['url'], before_options="-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5", options="-vn"), after=playing)
+        vc.volume = 80
 
         if len(songlist) == 0:
             await vc.disconnect()

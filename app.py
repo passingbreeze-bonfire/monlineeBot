@@ -3,14 +3,27 @@ from multiprocessing import *
 from discord.ext import commands
 from discord.utils import get
 from passlib.hash import pbkdf2_sha512
-import discord, io, asyncio, time, random, json
+import discord, io, asyncio, time, random, json,youtube_dl
 
 import botTool
 
 app = Sanic(__name__)
 bot = commands.Bot(command_prefix='!')
 isBot = "봇 대기중"
-playyt=None
+ydl_opt = {
+    'format': 'bestaudio/best',
+    'extractaudio': True,
+    'ignoreerrors': True,
+    'cookiefile': 'ytcookies.txt',
+    'default_search': 'ytsearch',
+    'sleep_interval': 10,
+    'max_sleep_interval': 60,
+    'postprocessors': [{
+        'key': 'FFmpegExtractAudio',
+        'preferredcodec': 'mp3',
+        'preferredquality': '192'
+    }],
+}
 
 @bot.event
 async def on_command_error(ctx, error):
@@ -34,7 +47,6 @@ async def on_disconnect():
 
 @bot.event
 async def on_message(message):
-    await bot.process_commands(message)  # bot event와 command를 같이 쓰기위해 필수로 넣어야
     if message.author == bot.user:
         return
     if message.content.startswith("ㄹㅇㅋㅋ"):
@@ -43,6 +55,8 @@ async def on_message(message):
             return m.content == "ㄹㅇㅋㅋ" and m.channel == channel
         msg = await bot.wait_for('message', check=check)
         await channel.send("{.content}만 치셈 ㅋㅋ".format(msg))
+
+    await bot.process_commands(message)  # bot event와 command를 같이 쓰기위해 필수로 넣어야
 
 
 @bot.command(name = "roll")
@@ -74,7 +88,7 @@ async def getidpw(ctx, *args):
 @bot.command(name = "play")
 async def play(ctx, *args):
     try :
-        global uservoice, vc, ydl_opt, songlist
+        global uservoice, vc, songlist
         songlist = {}
         uservoice = ctx.author.voice.channel
         vc = get(bot.voice_clients, guild=ctx.guild)
@@ -106,11 +120,34 @@ async def play(ctx, *args):
             botTool.ydl_opt['username'] = ydlID
             botTool.ydl_opt['password'] = ydlPW
             url = args[2]
-        playyt = await asyncio.gather(botTool.getSonglist(ctx, songlist, url), botTool.playYTlist(ctx, uservoice, vc, songlist))
+        await asyncio.gather(botTool.getSonglist(ctx, songlist, url), botTool.playYTlist(ctx, uservoice, vc, songlist))
 
     except AttributeError:
         await ctx.message.delete()
         await ctx.send("음성채널에 있어야 실행됩니다.\n Only available when connected Voice Channel")
+
+@bot.command(name = "next")
+async def gonext(ctx):
+    firstTitle = list(songlist.keys())[0]
+    nextTitle = list(songlist.keys())[1]
+    if len(songlist)>0:
+        if vc.is_playing():
+            vc.pause()
+        else:
+            await ctx.send("현재 음악을 재생하고 있지 않습니다.")
+            return
+        await ctx.send("다음곡이 재생됩니다. ➡️ 🎵 🎶")
+        songlist.pop(firstTitle)
+        with youtube_dl.YoutubeDL(ydl_opt) as ydl:
+            info = ydl.extract_info(songlist[nextTitle], download=False)
+        vc.source = discord.FFmpegPCMAudio(info['formats'][0]['url'], before_options="-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5", options="-vn")
+        vc.resume()
+    else :
+        await ctx.send("재생할 음악이 없습니다.️🙅 ")
+
+@bot.command(name = "다음")
+async def nextkor(ctx):
+    await gonext.invoke(ctx)
 
 @bot.command(name = "nowplay")
 async def showlist(ctx):
@@ -142,24 +179,6 @@ async def stop(ctx):
 @bot.command(name = "그만")
 async def stopkor(ctx):
     await stop.invoke(ctx)
-
-@bot.command(name = "skip")
-async def skip(ctx):
-    if len(songlist)>0:
-        if vc.is_playing():
-            vc.pause()
-        else:
-            await ctx.send("현재 음악을 재생하고 있지 않습니다.")
-            return
-        await ctx.send("다음곡이 재생됩니다. ➡️ 🎵 🎶")
-        songlist.pop(list(songlist.keys())[0])
-        await botTool.playYTlist(ctx, uservoice, vc, songlist)
-    else :
-        await ctx.send("재생할 음악이 없습니다.️🙅 ")
-
-@bot.command(name = "다음")
-async def skipkor(ctx):
-    await skip.invoke(ctx)
 
 @app.route("/")
 async def exe_bot(request):
