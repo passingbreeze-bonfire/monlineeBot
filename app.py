@@ -168,6 +168,8 @@ async def stopkor(ctx):
 async def exe_bot(request):
     return response.text("{0} : 서버가 구동중입니다. // {1}".format(time.strftime("%c", time.localtime(time.time())), isBot))
 
+#------------------------------------------------------------------------------------------------------------
+
 if __name__ == '__main__':
     botToken = getToken("config.json")  # string
     botTh = Process(target=bot.run, args=(botToken,))
