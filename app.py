@@ -41,9 +41,10 @@ async def on_ready():
 async def on_disconnect():
     if vc and vc.is_connected():
         await vc.disconnect()
-    await bot.logout()
-    await asyncio.sleep(20)
-    await bot.login(botTool.getToken("config.json"))
+    if bot.is_closed():
+        bot.clear()
+        await asyncio.sleep(10)
+        await bot.start(token=botTool.getToken("config.json"))
 
 @bot.event
 async def on_message(message):

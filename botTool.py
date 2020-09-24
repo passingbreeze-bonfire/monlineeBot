@@ -41,7 +41,11 @@ async def playYTlist(bot, ctx, uservoice, vc, songlist:dict, ydl_opt):
 
         def playing(error):
             try:
-                if len(songlist) > 0:
+                if len(songlist) == 0 :
+                    asyncio.run_coroutine_threadsafe(ctx.send("추가된 재생목록 또는 음악이 없으므로 음성채널에서 나갑니다."), bot.loop)
+                    asyncio.run_coroutine_threadsafe(asyncio.sleep(90), bot.loop)
+                    asyncio.run_coroutine_threadsafe(vc.disconnect, bot.loop)
+                else:
                     songlist.pop(list(songlist.keys())[0])
                     with youtube_dl.YoutubeDL(ydl_opt) as ydl:
                         firstTitle = list(songlist.keys())[0]
@@ -50,11 +54,6 @@ async def playYTlist(bot, ctx, uservoice, vc, songlist:dict, ydl_opt):
                                                        before_options="-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5",
                                                        options="-vn"), after=playing)
                         vc.volume = 80
-                else :
-                    sleepcoro = asyncio.sleep(90)
-                    asyncio.run_coroutine_threadsafe(vc.disconnect, bot.loop)
-                    asyncio.run_coroutine_threadsafe(sleepcoro, bot.loop)
-                    asyncio.run_coroutine_threadsafe(ctx.send("추가된 재생목록이 없으므로 음성채널에서 나갑니다."), bot.loop)
             except Exception as e:
                 print("Error occurred when callback called : ", e)
 
@@ -64,6 +63,6 @@ async def playYTlist(bot, ctx, uservoice, vc, songlist:dict, ydl_opt):
         vc.volume = 80
 
     except Exception as e:
-        await vc.disconnect()
-        await asyncio.sleep(20)
         await ctx.send("음원을 받는 과정에서 다음의 오류가 발생하였습니다.\n ➡️ ", e)
+        await asyncio.sleep(20)
+        await vc.disconnect()
