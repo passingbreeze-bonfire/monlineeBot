@@ -59,7 +59,7 @@ async def playYTlist(bot, ctx, uservoice, vc, songlist:dict):
     else:
         vc = await uservoice.connect()
 
-    def playing(error):
+    def playingContinue(error):
         try:
             songlist.pop(list(songlist.keys())[0])
             if len(songlist) == 0 :
@@ -72,13 +72,14 @@ async def playYTlist(bot, ctx, uservoice, vc, songlist:dict):
                 info = ytDownload(songlist[firstTitle])
                 vc.play(discord.FFmpegPCMAudio(info['formats'][0]['url'],
                                                before_options="-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5",
-                                               options="-vn"), after=playing)
+                                               options="-vn"), after=playingContinue)
                 vc.volume = 80
         except Exception as e:
             print("Error occurred after play callback called : ", e)
 
     vc.play(discord.FFmpegPCMAudio(info['formats'][0]['url'],
                                    before_options="-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5",
-                                   options="-vn"), after=playing)
+                                   options="-vn"),
+                                   after=playingContinue)
     vc.volume = 80
 
