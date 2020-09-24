@@ -1,29 +1,12 @@
 from sanic import Sanic, response
 from multiprocessing import *
-from discord.ext import commands
-from discord.utils import get
-from passlib.hash import pbkdf2_sha512
-import discord, io, asyncio, time, random, json, youtube_dl
-
-import botTool
+from botTool import *
 
 app = Sanic(__name__)
 bot = commands.Bot(command_prefix='!')
 isBot = "봇 대기중"
-ydl_opt = {
-    'format': 'bestaudio/best',
-    'extractaudio': True,
-    'ignoreerrors': True,
-    'cookiefile': 'ytcookie.txt',
-    'default_search': 'ytsearch',
-    'sleep_interval': 10,
-    'max_sleep_interval': 60,
-    'postprocessors': [{
-        'key': 'FFmpegExtractAudio',
-        'preferredcodec': 'mp3',
-        'preferredquality': '192'
-    }],
-}
+
+# ---------------------------------- Bot part ---------------------------------------------------
 
 @bot.event
 async def on_command_error(ctx, error):
@@ -39,12 +22,10 @@ async def on_ready():
 
 @bot.event
 async def on_disconnect():
-    if vc and vc.is_connected():
-        await vc.disconnect()
     if bot.is_closed():
         bot.clear()
         await asyncio.sleep(10)
-        await bot.start(token=botTool.getToken("config.json"))
+        await bot.start(token = getToken("config.json"))
 
 @bot.event
 async def on_message(message):
@@ -58,7 +39,6 @@ async def on_message(message):
         await channel.send("{.content}만 치셈 ㅋㅋ".format(msg))
 
     await bot.process_commands(message)  # bot event와 command를 같이 쓰기위해 필수로 넣어야
-
 
 @bot.command(name = "roll")
 async def roll(ctx, *args):
@@ -93,10 +73,12 @@ async def play(ctx, *args):
         songlist = {}
         uservoice = ctx.author.voice.channel
         vc = get(bot.voice_clients, guild=ctx.guild)
+
         if vc and vc.is_connected():
             await vc.move_to(uservoice)
         else:
             vc = await uservoice.connect()
+
         await ctx.message.delete()
         with open("youtube.json", "r", encoding='utf-8') as ytconf:
             data = ytconf.read()
@@ -117,11 +99,11 @@ async def play(ctx, *args):
             else:
                 await ctx.send("비밀번호가 맞지 않습니다. \n passwd not corrected!")
                 return
-            ydl_opt['username'] = ydlID
-            ydl_opt['password'] = ydlPW
+            ydl_opt['username'] = ydlID # ydl_opt from botTool
+            ydl_opt['password'] = ydlPW # ydl_opt from botTool
             url = args[2]
         await ctx.send("음악 준비중입니다...")
-        await asyncio.gather(botTool.getSonglist(ctx, songlist, ydl_opt, url), botTool.playYTlist(bot, ctx, uservoice, vc, songlist, ydl_opt))
+        await asyncio.gather(getSonglist(ctx, songlist, url), playYTlist(bot, ctx, uservoice, vc, songlist))
 
     except AttributeError:
         await ctx.message.delete()
@@ -139,8 +121,7 @@ async def gonext(ctx):
             return
         await ctx.send("다음곡이 재생됩니다. ➡️ 🎵 🎶")
         songlist.pop(firstTitle)
-        with youtube_dl.YoutubeDL(ydl_opt) as ydl:
-            info = ydl.extract_info(songlist[nextTitle], download=False)
+        info = await ytDownload(ctx, songlist[nextTitle])
         vc.source = discord.FFmpegPCMAudio(info['formats'][0]['url'], before_options="-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5", options="-vn")
         vc.resume()
     else :
@@ -181,12 +162,14 @@ async def stop(ctx):
 async def stopkor(ctx):
     await stop.invoke(ctx)
 
+# ----------------------------------- Web application Part ------------------------------------
+
 @app.route("/")
 async def exe_bot(request):
     return response.text("{0} : 서버가 구동중입니다. // {1}".format(time.strftime("%c", time.localtime(time.time())), isBot))
 
 if __name__ == '__main__':
-    botToken = botTool.getToken("config.json")  # string
+    botToken = getToken("config.json")  # string
     botTh = Process(target=bot.run, args=(botToken,))
 
     if botToken is not None:
@@ -199,11 +182,3 @@ if __name__ == '__main__':
     serverTh.start()
     botTh.join()
     serverTh.join()
-
-
-'''    
-    1. !로또 | !lotto
-    - 이번주 예상 1등 로또번호를 알려줍니다.
-    * Tell expected 1st Win Korean Lottery number in Channel
-
-'''
