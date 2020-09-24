@@ -32,17 +32,17 @@ def getToken(tokenFname):
                 strbuf.write("토큰을 불러오지 못했습니다.")
     return token
 
-async def ytDownload(ctx, url):
+def ytDownload(url):
     try :
         with youtube_dl.YoutubeDL(ydl_opt) as ydl:
             info = ydl.extract_info(url, download=False)
         return info
     except Exception as e:
-        await ctx.send("음원을 받는 과정에서 다음의 오류가 발생하였습니다.\n ➡️ ", e)
+        print("음원을 받는 과정에서 다음의 오류가 발생하였습니다.\n ➡️ ", e)
 
 async def getSonglist(ctx, songlist:dict, url):
     await ctx.send("재생 목록 받아오는 중...")
-    info = await ytDownload(ctx, url)
+    info = ytDownload(url)
     if 'entries' in info:
         result = info['entries']
         for i, item in enumerate(result):
@@ -53,7 +53,7 @@ async def getSonglist(ctx, songlist:dict, url):
 async def playYTlist(bot, ctx, uservoice, vc, songlist:dict):
     await ctx.send("🎧 음악 재생 시작 🎧")
     firstTitle = list(songlist.keys())[0]
-    info = await ytDownload(ctx, songlist[firstTitle])
+    info = ytDownload(songlist[firstTitle])
     if vc and vc.is_connected():
         await vc.move_to(uservoice)
     else:
@@ -63,12 +63,13 @@ async def playYTlist(bot, ctx, uservoice, vc, songlist:dict):
         try:
             songlist.pop(list(songlist.keys())[0])
             if len(songlist) == 0 :
-                asyncio.run_coroutine_threadsafe(ctx.send("추가된 재생목록 또는 음악이 없으므로 음성채널에서 나갑니다."), bot.loop)
+                asyncio.run_coroutine_threadsafe(ctx.send("음성채널에서 나갑니다."), bot.loop)
                 asyncio.run_coroutine_threadsafe(asyncio.sleep(90), bot.loop)
-                asyncio.run_coroutine_threadsafe(vc.disconnect, bot.loop)
+                if vc and vc.is_connected():
+                    asyncio.run_coroutine_threadsafe(vc.disconnect, bot.loop)
             else:
                 firstTitle = list(songlist.keys())[0]
-                info = await ytDownload(ctx, songlist[firstTitle])
+                info = ytDownload(songlist[firstTitle])
                 vc.play(discord.FFmpegPCMAudio(info['formats'][0]['url'],
                                                before_options="-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5",
                                                options="-vn"), after=playing)

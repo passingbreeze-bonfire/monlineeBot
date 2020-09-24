@@ -1,3 +1,4 @@
+# ==================================== Outer Space ==========================================
 from sanic import Sanic, response
 from multiprocessing import *
 from botTool import *
@@ -6,7 +7,7 @@ app = Sanic(__name__)
 bot = commands.Bot(command_prefix='!')
 isBot = "봇 대기중"
 
-# ---------------------------------- Bot part ---------------------------------------------------
+# ====================================== Bot part ===========================================
 
 @bot.event
 async def on_command_error(ctx, error):
@@ -111,17 +112,18 @@ async def play(ctx, *args):
 
 @bot.command(name = "next")
 async def gonext(ctx):
-    if len(songlist) > 1:
-        firstTitle = list(songlist.keys())[0]
-        nextTitle = list(songlist.keys())[1]
+    titles = list(songlist.keys())
+    if len(titles) > 1:
+        nowTitle = titles[0]
+        nextTitle = titles[1]
         if vc.is_playing():
             vc.pause()
         else:
             await ctx.send("현재 음악을 재생하고 있지 않습니다.")
             return
         await ctx.send("다음곡이 재생됩니다. ➡️ 🎵 🎶")
-        songlist.pop(firstTitle)
-        info = await ytDownload(ctx, songlist[nextTitle])
+        songlist.pop(nowTitle)
+        info = ytDownload(songlist[nextTitle])
         vc.source = discord.FFmpegPCMAudio(info['formats'][0]['url'], before_options="-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5", options="-vn")
         vc.resume()
     else :
@@ -134,13 +136,14 @@ async def nextkor(ctx):
 @bot.command(name = "nowplay")
 async def showlist(ctx):
     plist = ""
+    titles = list(songlist.keys())
     with io.StringIO() as strbuf:
         strbuf.write("> **🎙 Now Playing.. 🎙**\n")
-        strbuf.write("> *{}*\n\n".format(list(songlist.keys())[0]))
-        if len(songlist) > 0:
+        strbuf.write("> *{}*\n\n".format(titles[0]))
+        if len(songlist) > 1:
             strbuf.write("> **💿 Playlist 💿**\n")
             i = 1
-            for title in songlist.keys():
+            for title in titles:
                 strbuf.write("> {}. {}\n".format(i, title))
                 i += 1
         plist = strbuf.getvalue()
@@ -162,13 +165,13 @@ async def stop(ctx):
 async def stopkor(ctx):
     await stop.invoke(ctx)
 
-# ----------------------------------- Web application Part ------------------------------------
+# ==================================== Web application Part ======================================
 
 @app.route("/")
 async def exe_bot(request):
     return response.text("{0} : 서버가 구동중입니다. // {1}".format(time.strftime("%c", time.localtime(time.time())), isBot))
 
-#------------------------------------------------------------------------------------------------------------
+# ================================================================================================
 
 if __name__ == '__main__':
     botToken = getToken("config.json")  # string
