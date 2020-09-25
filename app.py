@@ -148,13 +148,13 @@ async def goprev(ctx):
         else:
             await ctx.send("현재 음악을 재생하고 있지 않습니다.")
             return
-        await ctx.send("이전 음악을 재생합니다. ➡️ 🎵 🎶")
         songidx -= 1
+        await ctx.send("이전 음악을 재생합니다. ➡️ 🎵 🎶 *{}*\n".format(titles[songidx]))
         info = ytDownload(songlist[titles[songidx]])
         vc.source = discord.FFmpegPCMAudio(info['formats'][0]['url'], before_options="-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5", options="-vn")
         vc.resume()
     else :
-        await ctx.send("재생할 음악이 없습니다.️🙅 ")
+        await ctx.send("더이상 재생할 음악이 없습니다.️🙅 ")
 
 @bot.command(name = "이전")
 async def korprev(ctx):
@@ -169,13 +169,13 @@ async def gonext(ctx):
         else:
             await ctx.send("현재 음악을 재생하고 있지 않습니다.")
             return
-        await ctx.send("다음곡이 재생됩니다. ➡️ 🎵 🎶")
         songidx+=1
+        await ctx.send("다 음악을 재생합니다. ➡️ 🎵 🎶 *{}*\n".format(titles[songidx]))
         info = ytDownload(songlist[titles[songidx]])
         vc.source = discord.FFmpegPCMAudio(info['formats'][0]['url'], before_options="-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5", options="-vn")
         vc.resume()
     else :
-        await ctx.send("다음 재생할 음악이 없습니다.️🙅 ")
+        await ctx.send("더이상 재생할 음악이 없습니다.️🙅 ")
 
 @bot.command(name = "다음")
 async def nextkor(ctx):

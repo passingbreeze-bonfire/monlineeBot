@@ -68,6 +68,7 @@ async def playYTlist(bot, ctx, uservoice, vc, songlist:dict, titles:list, index)
                 asyncio.run_coroutine_threadsafe(asyncio.sleep(90), bot.loop)
                 if vc and vc.is_connected():
                     asyncio.run_coroutine_threadsafe(vc.disconnect, bot.loop)
+                del songlist
             else:
                 nextTitle = titles[index]
             info = ytDownload(songlist[nextTitle])
@@ -76,6 +77,7 @@ async def playYTlist(bot, ctx, uservoice, vc, songlist:dict, titles:list, index)
                                            options="-vn"), after=playingContinue)
         except Exception as e:
             print("Error occurred after play callback called : ", e)
+            del songlist
 
     vc.play(discord.FFmpegPCMAudio(info['formats'][0]['url'],
                                    before_options="-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5",
