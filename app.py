@@ -1,6 +1,7 @@
 # ==================================== Outer Space ==========================================
-from sanic import Sanic, response
+from sanic import Sanic,response
 from multiprocessing import *
+
 from botTool import *
 
 app = Sanic(__name__)
@@ -8,14 +9,18 @@ bot = commands.Bot(command_prefix='!')
 isBot = "봇 대기중"
 
 # ====================================== Bot part ===========================================
+songlist = {}
+titles = []
+songidx = 0
+repeatsong = False
 
 @bot.event
 async def on_command_error(ctx, error):
     if isinstance(error, commands.CommandNotFound):
         await ctx.send("😱 없는 명령어입니다. 😱")
-    if isinstance(error, commands.CommandInvokeError):
-        await ctx.send("명령을 실행하던 중에 오류가 발생했습니다. 😭")
-        print(error)
+    # if isinstance(error, commands.CommandInvokeError):
+    #     await ctx.send("명령을 실행하던 중에 오류가 발생했습니다. 😭")
+    #     print(error)
 
 @bot.event
 async def on_ready():
@@ -70,8 +75,7 @@ async def getidpw(ctx, *args):
 @bot.command(name = "play")
 async def play(ctx, *args):
     try :
-        global uservoice, vc, songlist
-        songlist = {}
+        global uservoice, vc, songlist, titles, songidx, repeatsong
         uservoice = ctx.author.voice.channel
         vc = get(bot.voice_clients, guild=ctx.guild)
 
@@ -104,26 +108,70 @@ async def play(ctx, *args):
             ydl_opt['password'] = ydlPW # ydl_opt from botTool
             url = args[2]
         await ctx.send("음악 준비중입니다...")
-        await asyncio.gather(getSonglist(ctx, songlist, url), playYTlist(bot, ctx, uservoice, vc, songlist))
+        await getSonglist(ctx, songlist, url)
+        titles = list(songlist.keys())
+        await playYTlist(bot, ctx, uservoice, vc, songlist, titles, songidx)
 
     except AttributeError:
         await ctx.message.delete()
         await ctx.send("음성채널에 있어야 실행됩니다.\n Only available when connected Voice Channel")
 
+@bot.command(name = "틀어줘")
+async def playkor(ctx):
+    await play.invoke(ctx)
+
+@bot.command(name = "nowplay")
+async def showlist(ctx):
+    global titles,songidx
+    plist = ""
+    with io.StringIO() as strbuf:
+        strbuf.write("> **🎙 Now Playing.. 🎙**\n")
+        strbuf.write("> *{}*\n\n".format(titles[songidx]))
+        if len(songlist) > 0:
+            strbuf.write("> **💿 Playlist 💿**\n")
+            i = 1
+            for idx in range(songidx+1, len(titles)):
+                if i > len(songlist)-1:
+                    break
+                nowidx = idx % len(titles)
+                strbuf.write("> {}. {}\n".format(i, titles[nowidx]))
+                i+=1
+        plist = strbuf.getvalue()
+    await ctx.send(plist)
+
+@bot.command(name = "prev")
+async def goprev(ctx):
+    global titles, songidx
+    if 0 < songidx < len(titles):
+        if vc.is_playing():
+            vc.pause()
+        else:
+            await ctx.send("현재 음악을 재생하고 있지 않습니다.")
+            return
+        await ctx.send("이전 음악을 재생합니다. ➡️ 🎵 🎶")
+        songidx -= 1
+        info = ytDownload(songlist[titles[songidx]])
+        vc.source = discord.FFmpegPCMAudio(info['formats'][0]['url'], before_options="-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5", options="-vn")
+        vc.resume()
+    else :
+        await ctx.send("재생할 음악이 없습니다.️🙅 ")
+
+@bot.command(name = "이전")
+async def korprev(ctx):
+    await goprev.invoke(ctx)
+
 @bot.command(name = "next")
 async def gonext(ctx):
-    titles = list(songlist.keys())
-    if len(titles) > 1:
-        nowTitle = titles[0]
-        nextTitle = titles[1]
+    global titles, songidx
+    if songidx < len(titles):
         if vc.is_playing():
             vc.pause()
         else:
             await ctx.send("현재 음악을 재생하고 있지 않습니다.")
             return
         await ctx.send("다음곡이 재생됩니다. ➡️ 🎵 🎶")
-        songlist.pop(nowTitle)
-        info = ytDownload(songlist[nextTitle])
+        songidx+=1
+        info = ytDownload(songlist[titles[songidx]])
         vc.source = discord.FFmpegPCMAudio(info['formats'][0]['url'], before_options="-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5", options="-vn")
         vc.resume()
     else :
@@ -132,26 +180,6 @@ async def gonext(ctx):
 @bot.command(name = "다음")
 async def nextkor(ctx):
     await gonext.invoke(ctx)
-
-@bot.command(name = "nowplay")
-async def showlist(ctx):
-    plist = ""
-    titles = list(songlist.keys())
-    with io.StringIO() as strbuf:
-        strbuf.write("> **🎙 Now Playing.. 🎙**\n")
-        strbuf.write("> *{}*\n\n".format(titles[0]))
-        if len(songlist) > 1:
-            strbuf.write("> **💿 Playlist 💿**\n")
-            i = 1
-            for title in titles:
-                strbuf.write("> {}. {}\n".format(i, title))
-                i += 1
-        plist = strbuf.getvalue()
-    await ctx.send(plist)
-
-@bot.command(name = "틀어줘")
-async def playkor(ctx):
-    await play.invoke(ctx)
 
 @bot.command(name = "stop")
 async def stop(ctx):
@@ -164,6 +192,51 @@ async def stop(ctx):
 @bot.command(name = "그만")
 async def stopkor(ctx):
     await stop.invoke(ctx)
+
+@bot.command(name = "shuffle")
+async def shufflelist(ctx):
+    global songlist,titles
+    if len(songlist) > 0:
+        await ctx.send("🎶 플레이리스트가 흔들립니다!! 🎶")
+        if vc.is_playing():
+            vc.pause()
+        else:
+            await ctx.send("현재 음악을 재생하고 있지 않습니다.")
+            return
+        temp = list(songlist.items())
+        random.shuffle(temp)
+        songlist = dict(temp)
+        titles = list(songlist.keys())
+        info = ytDownload(songlist[titles[songidx]])
+        vc.source = discord.FFmpegPCMAudio(info['formats'][0]['url'],
+                                           before_options="-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5",
+                                           options="-vn")
+        vc.resume()
+    else :
+        await ctx.send("흔들릴 플레이리스트가 없습니다.")
+
+@bot.command(name = "셔플")
+async def korshuffel(ctx):
+    await shufflelist.invoke(ctx)
+
+@bot.command(name = "repeat")
+async def repeatlist(ctx, arg="0"):
+    global songidx, titles
+    if arg == "0" or arg == "1":
+        await ctx.send("플레이리스트를 반복합니다.")
+        titles += titles
+    else :
+        if isinstance(int(arg), int):
+            await ctx.send("플레이리스트를 {}번 반복합니다.".format(arg))
+            num = int(arg)
+            temp = titles*num
+            titles += temp
+        else:
+            await ctx.send("반복횟수를 잘못입력하셨습니다")
+
+@bot.command(name = "반복")
+async def korrepeat(ctx, arg):
+    await repeatlist.invoke(ctx, arg)
 
 # ==================================== Web application Part ======================================
 

@@ -50,30 +50,30 @@ async def getSonglist(ctx, songlist:dict, url):
     else:
         songlist[info['title']] = info['webpage_url']
 
-async def playYTlist(bot, ctx, uservoice, vc, songlist:dict):
+async def playYTlist(bot, ctx, uservoice, vc, songlist:dict, titles:list, index):
     await ctx.send("🎧 음악 재생 시작 🎧")
-    firstTitle = list(songlist.keys())[0]
-    info = ytDownload(songlist[firstTitle])
+    info = ytDownload(songlist[titles[index]])
     if vc and vc.is_connected():
         await vc.move_to(uservoice)
     else:
         vc = await uservoice.connect()
 
     def playingContinue(error):
+        nonlocal index
+        index += 1
+        nextTitle = ""
         try:
-            songlist.pop(list(songlist.keys())[0])
-            if len(songlist) == 0 :
-                asyncio.run_coroutine_threadsafe(ctx.send("음성채널에서 나갑니다."), bot.loop)
+            if index == len(songlist)-1 :
+                asyncio.run_coroutine_threadsafe(ctx.send("더이상 재생할 음악이 없으므로 음성채널에서 나갑니다."), bot.loop)
                 asyncio.run_coroutine_threadsafe(asyncio.sleep(90), bot.loop)
                 if vc and vc.is_connected():
                     asyncio.run_coroutine_threadsafe(vc.disconnect, bot.loop)
             else:
-                firstTitle = list(songlist.keys())[0]
-                info = ytDownload(songlist[firstTitle])
-                vc.play(discord.FFmpegPCMAudio(info['formats'][0]['url'],
-                                               before_options="-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5",
-                                               options="-vn"), after=playingContinue)
-                vc.volume = 80
+                nextTitle = titles[index]
+            info = ytDownload(songlist[nextTitle])
+            vc.play(discord.FFmpegPCMAudio(info['formats'][0]['url'],
+                                           before_options="-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5",
+                                           options="-vn"), after=playingContinue)
         except Exception as e:
             print("Error occurred after play callback called : ", e)
 
@@ -81,5 +81,4 @@ async def playYTlist(bot, ctx, uservoice, vc, songlist:dict):
                                    before_options="-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5",
                                    options="-vn"),
                                    after=playingContinue)
-    vc.volume = 80
 
