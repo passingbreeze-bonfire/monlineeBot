@@ -64,7 +64,14 @@ async def playYTlist(bot, ctx, uservoice, vc, songlist:dict, titles:list, index)
         nextTitle = ""
         try:
             if index == len(songlist)-1 :
-                finish = asyncio.run_coroutine_threadsafe(asyncio.gather(ctx.send("더이상 재생할 음악이 없으므로 음성채널에서 나갑니다."), asyncio.sleep(90), vc.disconnect), bot.loop)
+                songlistclearing = bot.loop.run_in_executor(None, songlist.clear)
+                titlesclearing = bot.loop.run_in_executor(None, titles.clear)
+                finish = asyncio.run_coroutine_threadsafe(asyncio.gather(ctx.send("더이상 재생할 음악이 없으므로 음성채널에서 나갑니다."),
+                                                                         asyncio.sleep(90),
+                                                                         songlistclearing,
+                                                                         titlesclearing,
+                                                                         vc.disconnect),
+                                                          bot.loop)
                 finish.result()
             else:
                 nextTitle = titles[index]
@@ -74,6 +81,7 @@ async def playYTlist(bot, ctx, uservoice, vc, songlist:dict, titles:list, index)
                                            options="-vn"), after=playingContinue)
         except Exception as e:
             print("Error occurred after play callback called : ", e)
+            titles.clear()
             songlist.clear()
 
     vc.play(discord.FFmpegPCMAudio(info['formats'][0]['url'],
