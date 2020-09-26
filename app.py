@@ -12,7 +12,6 @@ isBot = "봇 대기중"
 songlist = {}
 titles = []
 songidx = 0
-repeatsong = False
 
 @bot.event
 async def on_command_error(ctx, error):
@@ -75,7 +74,7 @@ async def getidpw(ctx, *args):
 @bot.command(name = "play")
 async def play(ctx, *args):
     try :
-        global uservoice, vc, songlist, titles, songidx, repeatsong
+        global uservoice, vc, songlist, titles, songidx
         uservoice = ctx.author.voice.channel
         vc = get(bot.voice_clients, guild=ctx.guild)
 
@@ -129,12 +128,11 @@ async def showlist(ctx):
         strbuf.write("> *{}*\n\n".format(titles[songidx]))
         if len(songlist) > 0:
             strbuf.write("> **💿 Playlist 💿**\n")
-            i = 1
-            for idx in range(songidx+1, len(titles)):
+            i = 0
+            for futidx in range(songidx+1, len(titles)):
                 if i > len(songlist)-1:
                     break
-                nowidx = idx % len(titles)
-                strbuf.write("> {}. {}\n".format(i, titles[nowidx]))
+                strbuf.write("> {}. {}\n".format(i+1, titles[futidx]))
                 i+=1
         plist = strbuf.getvalue()
     await ctx.send(plist)
@@ -170,7 +168,7 @@ async def gonext(ctx):
             await ctx.send("현재 음악을 재생하고 있지 않습니다.")
             return
         songidx+=1
-        await ctx.send("다 음악을 재생합니다. ➡️ 🎵 🎶 *{}*\n".format(titles[songidx]))
+        await ctx.send("다음 음악을 재생합니다. ➡️ 🎵 🎶 *{}*\n".format(titles[songidx]))
         info = ytDownload(songlist[titles[songidx]])
         vc.source = discord.FFmpegPCMAudio(info['formats'][0]['url'], before_options="-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5", options="-vn")
         vc.resume()
@@ -186,6 +184,8 @@ async def stop(ctx):
     if vc and vc.is_connected():
         await vc.disconnect()
         await ctx.send("음악 재생을 멈춥니다.")
+        titles.clear()
+        songlist.clear()
     else :
         await ctx.send("음성채널에 없습니다.")
 
@@ -195,18 +195,19 @@ async def stopkor(ctx):
 
 @bot.command(name = "shuffle")
 async def shufflelist(ctx):
-    global songlist,titles
+    global songlist, titles, songidx
+    if vc.is_playing():
+        vc.pause()
+    else:
+        await ctx.send("현재 음악을 재생하고 있지 않습니다.")
+        return
     if len(songlist) > 0:
         await ctx.send("🎶 플레이리스트가 흔들립니다!! 🎶")
-        if vc.is_playing():
-            vc.pause()
-        else:
-            await ctx.send("현재 음악을 재생하고 있지 않습니다.")
-            return
         temp = list(songlist.items())
         random.shuffle(temp)
         songlist = dict(temp)
         titles = list(songlist.keys())
+        songidx = 0
         info = ytDownload(songlist[titles[songidx]])
         vc.source = discord.FFmpegPCMAudio(info['formats'][0]['url'],
                                            before_options="-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5",
