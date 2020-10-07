@@ -32,17 +32,28 @@ def getToken(tokenFname):
                 strbuf.write("토큰을 불러오지 못했습니다.")
     return token
 
-def ytDownload(url):
+def ytDownload(ctx, url):
+    class ytLogger(object):
+        async def debug(self, msg):
+            pass
+
+        async def warning(self, msg):
+            pass
+
+        async def error(self, msg):
+            await ctx.send("유튜브 음원 관련하여 오류가 발생하였습니다.😭")
+
+    ydl_opt['logger'] = ytLogger()
     try :
         with youtube_dl.YoutubeDL(ydl_opt) as ydl:
             info = ydl.extract_info(url, download=False)
         return info
     except Exception as e:
-        print("음원을 받는 과정에서 다음의 오류가 발생하였습니다.\n ➡️ ", e)
+        await ctx.send("음원을 받는 과정에서 다음의 오류가 발생하였습니다.\n ➡️ ", e)
 
 async def getSonglist(ctx, songlist:dict, url):
     await ctx.send("재생 목록 받아오는 중...")
-    info = ytDownload(url)
+    info = ytDownload(ctx, url)
     if 'entries' in info:
         result = info['entries']
         for i, item in enumerate(result):
@@ -52,7 +63,7 @@ async def getSonglist(ctx, songlist:dict, url):
 
 async def playYTlist(bot, ctx, uservoice, vc, songlist:dict, titles:list, index):
     await ctx.send("🎧 음악 재생 시작 🎧")
-    info = ytDownload(songlist[titles[index]])
+    info = ytDownload(ctx, songlist[titles[index]])
     if vc and vc.is_connected():
         await vc.move_to(uservoice)
     else:
@@ -73,12 +84,14 @@ async def playYTlist(bot, ctx, uservoice, vc, songlist:dict, titles:list, index)
                 finish.result()
             else:
                 nextTitle = titles[index]
-            info = ytDownload(songlist[nextTitle])
+            info = ytDownload(ctx, songlist[nextTitle])
             vc.play(discord.FFmpegPCMAudio(info['formats'][0]['url'],
                                            before_options="-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5",
                                            options="-vn"), after=playingContinue)
         except Exception as e:
-            print("Error occurred after play callback called : ", e)
+            errormsg = ctx.send("재생도중 오류가 발생하여 재생을 중단니다.")
+            if vc.is_connected():
+                asyncio.run_coroutine_threadsafe(errormsg, bot.loop)
 
     vc.play(discord.FFmpegPCMAudio(info['formats'][0]['url'],
                                    before_options="-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5",
