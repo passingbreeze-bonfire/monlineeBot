@@ -1,15 +1,7 @@
-import time
-
 from discord.ext import commands
-from discord.utils import get
-from passlib.hash import pbkdf2_sha512
 from collections import deque
-import io, discord, asyncio, re
-import pprint, youtube_dl
-
-import rx
-import rx.operators as ops
-from rx.scheduler.eventloop import AsyncIOScheduler
+import io, discord, asyncio, random
+import youtube_dl
 
 
 class ytMusic(commands.Cog):
@@ -76,6 +68,9 @@ class ytMusic(commands.Cog):
             return -1
 
     async def __continue(self, ctx, error):
+        if error is not None:
+            await ctx.send("알 수 없는 오류로 계속 재생할 수 없습니다.")
+            return
         if not self.__now:
             if self.__bot_voice and self.__bot_voice.is_connected():
                 fincoro = asyncio.gather(asyncio.sleep(60),
@@ -85,11 +80,12 @@ class ytMusic(commands.Cog):
                 try:
                     finish.result()
                 except Exception as e:
-                    print("Error from finishing playing :", e)
+                    await ctx.send(f"Error from finishing playing : {e}")
                 return
         while self.__now:
             try:
                 title = self.__now.popleft()
+                self.__prev.append(title)
                 self.__ytDownload(self.__songs[title])
                 if self.__bot_voice and self.__bot_voice.is_connected():
                     self.__bot_voice.play(discord.FFmpegPCMAudio(self.__ytinfo['formats'][0]['url'],
@@ -102,7 +98,7 @@ class ytMusic(commands.Cog):
                         not_connect_msg = asyncio.run_coroutine_threadsafe(not_connect_msg, self.__bot.loop)
                         not_connect_msg.result()
                     except Exception as e:
-                        print("Error from not connected voice channel : ", e)
+                        await ctx.send(f"Error with not connect : {e}")
             except Exception as e:
                 err_msg = ctx.send("재생도중 오류가 발생하여 재생을 중단합니다.")
                 if self.__bot_voice.is_connected():
@@ -111,80 +107,57 @@ class ytMusic(commands.Cog):
                         err.result()
                         asyncio.run_coroutine_threadsafe(self.__bot_voice.disconnect, self.__bot.loop)
                     except Exception as e:
-                        print("Error from playlist error : ", e)
+                        await ctx.send(f"Error while playing : {e}")
 
-    async def playYTlist(self, ctx, url : str):
-        await ctx.send("음악 준비중입니다...")
-        bot_scheduler = AsyncIOScheduler(loop=self.__bot.loop)
+    async def __playYTlist(self, ctx, url : str):
+        await ctx.send("Loading...")
         get_yt_chk = await self.__set_song_list(ctx, url)
         if get_yt_chk < 0:
             return
         else:
             await ctx.send("🎧 음악 재생 시작 🎧")
-            # print(self.__now)
-            # title = self.__now.popleft()
-            async def play_song(title):
-                self.__ytDownload(self.__songs[title])
+            title = self.__now.popleft()
+            self.__prev.append(title)
+            self.__ytDownload(self.__songs[title])
+            if self.__bot_voice and self.__bot_voice.is_connected():
                 await ctx.send(f"streaming...{title}")
-                if self.__bot_voice and self.__bot_voice.is_connected():
-                    self.__bot_voice.play(discord.FFmpegPCMAudio(self.__ytinfo['formats'][0]['url'],
-                                                       before_options="-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5",
-                                                       options="-vn"),
-                                after=None)
+                self.__bot_voice.play(discord.FFmpegPCMAudio(self.__ytinfo['formats'][0]['url'],
+                                                   before_options="-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5",
+                                                   options="-vn"),
+                            after=self.__continue)
+            else:
+                await ctx.send("봇이 음성채널에 없습니다.")
 
-                time.sleep(self.__ytinfo['duration'])
-
-            rx.from_iterable(self.__now, bot_scheduler).pipe(
-                ops.debounce(self.__ytinfo['duration']+10, bot_scheduler),
-            ).subscribe(
-                on_next = lambda t : await play_song(t),
-                on_error = lambda e: print(f"Error on Observer: {e}")
-            )
-            # def play_song(title : str):
-            #     if self.__bot_voice and self.__bot_voice.is_connected():
-            #         source = self.__ytDownload(self.__songs[title])
-            #         self.__bot_voice.play(discord.FFmpegPCMAudio(source['formats'][0]['url'],
-            #                               before_options="-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5",
-            #                               options="-vn"),
-            #                               after = play_song)
-            #     else:
-            #         not_con_msg = ctx.send("음성채널에 연결되어있지 않아 재생을 중단합니다.")
-            #         try:
-            #             not_connected = asyncio.run_coroutine_threadsafe(not_con_msg, self.__bot)
-            #             not_connected.result()
-            #         except Exception as e:
-            #             print("Error from not connected voice channel : ", e)
-            #             err_msg = ctx.send("재생도중 오류가 발생하여 재생을 중단합니다.")
-            #             err = asyncio.run_coroutine_threadsafe(err_msg, self.__bot)
-            #             err.result()
-            #             asyncio.run_coroutine_threadsafe(self.__bot_voice.disconnect, self.__bot)
-            #
-            # def fin_song():
-            #     if self.__bot_voice and self.__bot_voice.is_connected():
-            #         fincoro = asyncio.gather(asyncio.sleep(60),
-            #                                  ctx.send("더이상 재생할 음악이 없으므로 음성채널에서 나갑니다."),
-            #                                  self.__bot_voice.disconnect)
-            #         finish = asyncio.run_coroutine_threadsafe(fincoro, self.__bot)
-            #         try:
-            #             finish.result()
-            #         except Exception as e:
-            #             print("Error from finishing playing :", e)
-
-
+    async def __replayList(self, ctx):
+        await ctx.send("Loading...")
+        await ctx.send("🎧 다시 재생 시작 🎧")
+        title = self.__now.popleft()
+        self.__prev.append(title)
+        self.__ytDownload(self.__songs[title])
+        if self.__bot_voice and self.__bot_voice.is_connected():
+            await ctx.send(f"streaming...{title}")
+            self.__bot_voice.play(discord.FFmpegPCMAudio(self.__ytinfo['formats'][0]['url'],
+                                               before_options="-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5",
+                                               options="-vn"),
+                        after=self.__continue)
+        else:
+            await ctx.send("봇이 음성채널에 없습니다. 🙅")
 
     @commands.command()
     async def play(self, ctx, *args):
         args_list = list(args)
         args_len = len(args_list)
+        if ctx.author.voice and ctx.author.voice.channel:
+            user_voice = ctx.author.voice.channel
+            self.__bot_voice = await user_voice.connect()
+        else:
+            await ctx.send("음성 채널에 없습니다. 🙅")
+            return
+        await ctx.message.delete()
+
         if args_len == 1:
-            if ctx.author.voice and ctx.author.voice.channel:
-                user_voice = ctx.author.voice.channel
-                self.__bot_voice = await user_voice.connect()
-            else:
-                await ctx.send("음성 채널에 없음!")
-                return
-            await ctx.message.delete()
-            await self.playYTlist(ctx, args_list[0])
+            await self.__playYTlist(ctx, args_list[0])
+
         else:
             await ctx.send("\"!play | !틀어줘 [유튜브 링크]\"를 입력해주세요")
             return
@@ -215,11 +188,83 @@ class ytMusic(commands.Cog):
             await ctx.send("음악 재생을 멈춥니다.")
             self.stop_song()
         else:
-            await ctx.send("음성채널에 없습니다.")
+            await ctx.send("음성채널에 없습니다. 🙅")
 
     @commands.command(name="그만")
     async def stopkor(self, ctx):
         await self.stop.invoke(ctx)
+
+    @commands.command()
+    async def prev(self, ctx):
+        if self.__prev:
+            if self.__bot_voice and self.__bot_voice .is_playing():
+                self.__bot_voice.stop()
+                await ctx.send(f"이전 음악을 재생합니다. ➡️ 🎵 🎶 *{self.__prev[-1]}*\n")
+                self.__now.appendleft(self.__prev.pop())
+                await self.__replayList(ctx)
+            else:
+                await ctx.send("현재 음악을 재생하고 있지 않습니다. 🙅")
+                return
+        else:
+            await ctx.send("이전에 들었던 음악이 없습니다. ️🙅")
+
+    @commands.command(name="이전")
+    async def korprev(self,ctx):
+        await self.prev.invoke(ctx)
+
+    @commands.command()
+    async def next(self, ctx):
+        if len(self.__now) > 2:
+            if self.__bot_voice and self.__bot_voice.is_playing():
+                self.__bot_voice.stop()
+                await ctx.send(f"다음 음악을 재생합니다. ➡️ 🎵 🎶 *{self.__now[1]}*\n")
+                self.__now.popleft()
+                await self.__replayList(ctx)
+            else:
+                await ctx.send("현재 음악을 재생하고 있지 않습니다. 🙅")
+                return
+        else:
+            await ctx.send("다음 음악이 없습니다. ️🙅")
+
+    @commands.command(name="다음")
+    async def nextkor(self, ctx):
+        await self.next.invoke(ctx)
+
+    @commands.command()
+    async def shuffle(self, ctx):
+        if self.__bot_voice and self.__bot_voice.is_playing():
+            self.__bot_voice.stop()
+        else:
+            await ctx.send("현재 음악을 재생하고 있지 않습니다.")
+            return
+        if len(self.__now) > 2:
+            await ctx.send("🎶 플레이리스트가 흔들립니다!! 🎶")
+            random.shuffle(self.__now)
+            await self.__replayList(ctx)
+        else:
+            await ctx.send("흔들릴 플레이리스트가 없습니다.")
+
+    @commands.command(name="셔플")
+    async def korshuffle(self, ctx):
+        await self.shuffle.invoke(ctx)
+
+    @commands.command()
+    async def repeat(self, ctx, arg="0"):
+        temp = self.__prev[:] + self.__now[:]
+        if arg == "0" or arg == "1":
+            await ctx.send("플레이리스트를 반복합니다.")
+            self.__now += temp * 10
+        else:
+            if isinstance(int(arg), int):
+                await ctx.send(f"플레이리스트를 {arg}번 반복합니다.")
+                self.__now += temp * int(arg)
+            else:
+                await ctx.send("반복횟수를 잘못 입력하셨습니다")
+
+    @commands.command(name="반복")
+    async def korrepeat(self, ctx, arg):
+        await self.repeat.invoke(ctx, arg)
+
 
 
 class ytLogger:
@@ -345,93 +390,5 @@ async def playYTlist(bot, ctx, uservoice, vc, playlist:dict, prevone:dict, title
 
 '''
 
-@bot.command(name = "prev")
-async def go_prev(ctx):
-    global prevone,titles
-    if len(prevone) > 0:
-        prevTitle = list(prevone.keys())[0]
-        if bot_voice.is_playing():
-            bot_voice.stop()
-        else:
-            await ctx.send("현재 음악을 재생하고 있지 않습니다.")
-            return
-        await ctx.send("이전 음악을 재생합니다. ➡️ 🎵 🎶 *{}*\n".format(prevTitle))
-        titles.insert(0, prevTitle)
-        await yt_handler.playYTlist(ctx, user_voice, bot_voice)
-        # info = ytDownload(prevone[prevTitle])
-        # vc.source = discord.FFmpegPCMAudio(info['formats'][0]['url'], before_options="-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5", options="-vn")
-        # vc.resume()
-    else :
-        await ctx.send("더이상 재생할 음악이 없습니다.️🙅 ")
-
-@bot.command(name = "이전")
-async def korprev(ctx):
-    await go_prev.invoke(ctx)
-
-@bot.command(name = "next")
-async def play_next(ctx):
-    global playlist, titles
-    if len(playlist) > 0:
-        if bot_voice.is_playing():
-            bot_voice.stop()
-        else:
-            await ctx.send("현재 음악을 재생하고 있지 않습니다.")
-            return
-        nowTitle = titles[0]
-        titles.pop(0)
-        playlist.pop(nowTitle)
-        await ctx.send("다음 음악을 재생합니다. ➡️ 🎵 🎶 *{}*\n".format(titles[0]))
-        await playYTlist(bot, ctx, uservoice, bot_voice, playlist, prevone, titles)
-    else :
-        await ctx.send("더이상 재생할 음악이 없습니다.️🙅 ")
-
-@bot.command(name = "다음")
-async def nextkor(ctx):
-    await play_next.invoke(ctx)
-
-@bot.command(name = "shuffle")
-async def shufflelist(ctx):
-    global playlist, titles, prevone
-    if bot_voice.is_playing():
-        bot_voice.stop()
-    else:
-        await ctx.send("현재 음악을 재생하고 있지 않습니다.")
-        return
-    if len(playlist) > 0:
-        await ctx.send("🎶 플레이리스트가 흔들립니다!! 🎶")
-        temp = list(playlist.items())
-        random.shuffle(temp)
-        playlist = dict(temp)
-        titles = list(playlist.keys())
-        prevone.clear()
-        await playYTlist(bot, ctx, uservoice, bot_voice, playlist, prevone, titles)
-        # info = ytDownload(playlist[titles[0]])
-        # vc.source = discord.FFmpegPCMAudio(info['formats'][0]['url'],
-        #                                    before_options="-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5",
-        #                                    options="-vn")
-        # vc.resume()
-    else :
-        await ctx.send("흔들릴 플레이리스트가 없습니다.")
-
-@bot.command(name = "셔플")
-async def korshuffle(ctx):
-    await shufflelist.invoke(ctx)
-
-@bot.command(name = "repeat")
-async def repeatlist(ctx, arg="0"):
-    global songlist
-    if arg == "0" or arg == "1":
-        await ctx.send("플레이리스트를 반복합니다.")
-
-    else :
-        if isinstance(int(arg), int):
-            await ctx.send("플레이리스트를 {}번 반복합니다.".format(arg))
-            num = int(arg)
-        else:
-            await ctx.send("반복횟수를 잘못 입력하셨습니다")
-
-@bot.command(name = "반복")
-async def korrepeat(ctx, arg):
-    await repeatlist.invoke(ctx, arg)
 
 '''
