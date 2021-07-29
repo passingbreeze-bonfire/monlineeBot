@@ -34,7 +34,6 @@ class ytMusic(commands.Cog):
         self.__bot_token = "NzU0OTAyNzcwNTA2NzkzMDIx.X17f_Q.NWy2xds0lHO5NnFGQOJn_lN1H8s"
 
     def __bot_msg_wrapper(self, ctx, msg):
-        print("ctx msg wrapper on")
         async def bot_msg(ctx, msg):
             await ctx.send(msg)
 
@@ -51,7 +50,6 @@ class ytMusic(commands.Cog):
         return self.__now
 
     def __ytDownload(self, url):
-        print(f"📥 Downloading...⟹ {url}")
         with youtube_dl.YoutubeDL(self.__opt) as ydl:
             self.__ytinfo = ydl.extract_info(url, download=False)
             if self.__chk_err < 0:
