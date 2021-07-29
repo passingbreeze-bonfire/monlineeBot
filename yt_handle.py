@@ -43,9 +43,6 @@ class ytMusic(commands.Cog):
         self.__now.clear()
         self.__prev.clear()
         await self.__bot_voice.disconnect()
-        self.__bot.clear()
-        await asyncio.sleep(10)
-        await self.__bot.start(token=self.__bot_token)
 
     def get_song_list(self):
         return self.__now
