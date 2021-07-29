@@ -17,15 +17,16 @@ class ytMusic(commands.Cog):
         self.__now_title = ""
         self.__opt = {
             'format': 'bestaudio/best',
+            'nocheckcertificate': True,
             'extractaudio': True,
             'ignoreerrors': True,
             'forceduration': False,
             'logger': ytLogger(self),
-            'default_search': 'ytsearch',
+            'default_search': 'auto',
             'sleep_interval': 10,
             'max_sleep_interval': 60,
             'postprocessors': [{
-                'key': 'FFmpegExtractAudio',
+                'key': 'FFmpegExtractAudioPP',
                 'preferredcodec': 'mp3',
                 'preferredquality': '192'
             }],
@@ -117,14 +118,9 @@ class ytMusic(commands.Cog):
                 await ctx.send("음성 채널에 없습니다. 🙅")
                 return
             await self.__set_song_list(ctx, args_list[0])
-            try:
-                rx.from_iterable(self.__now, sched).pipe(
-                    self.__play_song(ctx)
-                ).subscribe(on_error = lambda e : print(e))
-            except RuntimeError:
-                self.__bot.clear()
-                await asyncio.sleep(10)
-                await self.__bot.start(token=self.__bot_token)
+            rx.from_iterable(self.__now, sched).pipe(
+                self.__play_song(ctx)
+            ).subscribe(on_error = lambda e : print(e))
         else:
             await ctx.send("\"!play | !틀어줘 [유튜브 링크]\"를 입력해주세요")
             return
