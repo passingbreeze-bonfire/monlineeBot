@@ -108,14 +108,14 @@ class ytMusic(commands.Cog):
         sched = AsyncIOScheduler(loop = self.__bot.loop)
         args_list = list(args)
         args_len = len(args_list)
-        if ctx.author.voice and ctx.author.voice.channel:
-            user_voice = ctx.author.voice.channel
-            self.__bot_voice = await user_voice.connect()
-        else:
-            await ctx.send("음성 채널에 없습니다. 🙅")
-            return
         await ctx.send("Loading...")
         if args_len == 1:
+            if ctx.author.voice and ctx.author.voice.channel:
+                user_voice = ctx.author.voice.channel
+                self.__bot_voice = await user_voice.connect()
+            else:
+                await ctx.send("음성 채널에 없습니다. 🙅")
+                return
             await self.__set_song_list(ctx, args_list[0])
             try:
                 rx.from_iterable(self.__now, sched).pipe(
