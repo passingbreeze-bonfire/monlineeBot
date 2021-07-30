@@ -1,10 +1,11 @@
 # ==================================== Outer Space ==========================================
 import discord
 from discord.ext import commands
-import io, asyncio, time, random
+import asyncio, random
 import yt_handle
 
-bot = commands.Bot(command_prefix = commands.when_mentioned_or("!"))
+intents = discord.Intents.all()
+bot = commands.Bot(command_prefix = commands.when_mentioned_or("!"), intents=intents)
 bot_token = "NzU0OTAyNzcwNTA2NzkzMDIx.X17f_Q.NWy2xds0lHO5NnFGQOJn_lN1H8s"
 # ====================================== Bot part ===========================================
 
