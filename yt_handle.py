@@ -115,6 +115,7 @@ class ytMusic(commands.Cog):
                 await ctx.send("음성 채널에 없습니다. 🙅")
                 return
             await self.__set_song_list(ctx, args_list[0])
+            await ctx.send("🎧 음악 재생 시작 🎧")
             rx.from_iterable(self.__now, sched).pipe(
                 self.__play_song(ctx)
             ).subscribe(on_error = lambda e : print(e))
