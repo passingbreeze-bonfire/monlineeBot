@@ -67,6 +67,7 @@ class ytMusic(commands.Cog):
                         self.__now.append(self.__ytinfo['entries'][i]['title'])
                         self.__songs[self.__ytinfo['entries'][i]['title']] = self.__ytinfo['entries'][i]['url']
                 else:
+                    await ctx.send("🎶 준비 중... 🎶")
                     self.__now.append(self.__ytinfo['title'])
                     self.__songs[self.__ytinfo['title']] = self.__ytinfo['webpage_url']
                 return 0
