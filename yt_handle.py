@@ -64,7 +64,7 @@ class ytMusic(commands.Cog):
                         self.__now.append(self.__ytinfo['entries'][i]['title'])
                         self.__songs[self.__ytinfo['entries'][i]['title']] = self.__ytinfo['entries'][i]['url']
                 else:
-                    await ctx.send("🎶 준비 중... 🎶")
+                    await ctx.send("준비 중...")
                     self.__now.append(self.__ytinfo['title'])
                     self.__songs[self.__ytinfo['title']] = self.__ytinfo['webpage_url']
                 return 0
@@ -83,6 +83,7 @@ class ytMusic(commands.Cog):
             await self.__ytDownload(self.__songs[title])
             print(f'duration : {self.dur}')
             if self.__bot_voice and self.__bot_voice.is_connected():
+                await ctx.send(f"🎶 ~ {self.__now_title} ~ 🎶")
                 self.__bot_voice.play(discord.FFmpegOpusAudio(self.__ytinfo['formats'][0]['url'],
                                                               before_options="-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5",
                                                               options="-vn"), after=lambda e: time.sleep(5))
@@ -97,7 +98,7 @@ class ytMusic(commands.Cog):
         args_list = list(args)
         args_len = len(args_list)
         await ctx.send("Loading...")
-        if args_len == 1:
+        if args_len == 1 and "youtube.com" in args[0]:
             if ctx.author.voice and ctx.author.voice.channel:
                 user_voice = ctx.author.voice.channel
                 self.__bot_voice = await user_voice.connect()
