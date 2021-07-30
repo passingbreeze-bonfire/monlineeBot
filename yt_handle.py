@@ -1,6 +1,6 @@
 from discord.ext import commands
 from collections import deque
-import io, discord, asyncio, random, time
+import io, discord, asyncio, random, time, re
 import youtube_dl
 
 
@@ -98,7 +98,7 @@ class ytMusic(commands.Cog):
         args_list = list(args)
         args_len = len(args_list)
         await ctx.send("Loading...")
-        if args_len == 1 and "youtube.com" in args[0]:
+        if args_len == 1 and re.search(r'^(https?\:\/\/)?(www\.)?(youtube\.com|youtu\.?be)\/.+$', args[0]):
             if ctx.author.voice and ctx.author.voice.channel:
                 user_voice = ctx.author.voice.channel
                 self.__bot_voice = await user_voice.connect()
