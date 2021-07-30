@@ -27,7 +27,7 @@ class ytMusic(commands.Cog):
             'max_sleep_interval': 60,
             'postprocessors': [{
                 'key': 'FFmpegExtractAudioPP',
-                'preferredcodec': 'mp3',
+                'preferredcodec': 'opus',
                 'preferredquality': '192'
             }],
         }
@@ -85,9 +85,7 @@ class ytMusic(commands.Cog):
                     self.__prev.append(title)
                     self.__ytDownload(self.__songs[title])
                     if self.__bot_voice and self.__bot_voice.is_connected():
-                        self.__bot_voice.play(discord.FFmpegPCMAudio(self.__ytinfo['formats'][0]['url'],
-                                                                     before_options="-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5",
-                                                                     options="-vn"),
+                        self.__bot_voice.play(discord.FFmpegOpusAudio(self.__ytinfo['formats'][0]['url'], options="-vn"),
                                               after=None)
                         time.sleep(self.__ytinfo['duration'] + 10)
                     else:
