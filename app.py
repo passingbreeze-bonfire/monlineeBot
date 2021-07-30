@@ -4,7 +4,7 @@ from discord.ext import commands
 import asyncio, random
 import yt_handle
 
-intents = discord.Intents.all()
+intents = discord.Intents.default()
 bot = commands.Bot(command_prefix = commands.when_mentioned_or("!"), intents=intents)
 bot_token = "NzU0OTAyNzcwNTA2NzkzMDIx.X17f_Q.NWy2xds0lHO5NnFGQOJn_lN1H8s"
 # ====================================== Bot part ===========================================
