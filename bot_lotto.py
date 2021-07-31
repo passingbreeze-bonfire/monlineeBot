@@ -27,10 +27,8 @@ class bot_lottery(commands.Cog):
 
     @commands.command()
     async def lotto(self, ctx):
-        win_q = []
         msg, msgs = [], []
         now_date = dt.datetime.now().timestamp()
-        pq.heapify(win_q)
         if self.__get_latest(now_date):
             await ctx.send("새로운 당첨 번호가 나왔습니다. 결과 반영중...")
         else:
@@ -41,6 +39,8 @@ class bot_lottery(commands.Cog):
             np.random.seed(int(self.__seed))
             rand_num = np.random.binomial(max_n, 1/8_145_060, size = (5, 45))
             for arr in rand_num:
+                win_q = []
+                pq.heapify(win_q)
                 for i, cnt in enumerate(arr, 1):
                     pq.heappush(win_q, (-cnt, i))
                 while win_q:
