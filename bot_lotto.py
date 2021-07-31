@@ -51,7 +51,7 @@ class bot_lottery(commands.Cog):
                         msg.append(str(pq.heappop(win_q)[1]))
                 np.save('last_result.npy', np.array(msgs, dtype=np.str))
             else:
-                msgs = np.load('last_resslut.npy')
+                msgs = np.load('last_result.npy')
             await ctx.send('\n'.join(msgs))
 
 

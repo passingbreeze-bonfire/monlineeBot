@@ -125,3 +125,6 @@ logs/
 
 # csv file
 *.csv
+
+# numpy file
+*.npy
