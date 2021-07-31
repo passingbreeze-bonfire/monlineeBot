@@ -56,7 +56,7 @@ class bot_lottery(commands.Cog):
             msgs = np.load('last_result.npy')
         await ctx.send('\n'.join(msgs))
 
-
+# Test code
 if __name__ == '__main__':
     import app
     exp = bot_lottery(app.bot)
