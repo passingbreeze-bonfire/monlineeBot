@@ -36,7 +36,7 @@
    > !로또 | !lotto
         
    - 이번주 예상 1등 로또번호를 알려줍니다.
-       * Tell expected 1st Win Korean Lottery number this week
+       * Bot expects 1st Win Korean Lottery number this week.
 
 
 
@@ -46,7 +46,7 @@
    > !룰렛 요소1, 요소2, 요소3... | !roll ele1, ele2, ele3...
 
    - 임의로 하나를 선택해줍니다.
-       * Choose one among what you enter elements
+       * Choose one among what you input.
 
 
     
