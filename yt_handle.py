@@ -3,7 +3,7 @@ import io, asyncio, random, time, re
 
 import discord, youtube_dl
 from discord.ext import commands
-
+from tqdm import tqdm
 
 class ytMusic(commands.Cog):
     def __init__(self, bot):
@@ -56,7 +56,7 @@ class ytMusic(commands.Cog):
                 if 'entries' in self.__ytinfo:
                     await ctx.send("🎶 플레이리스트 준비 중... 🎶")
                     result = self.__ytinfo['entries']
-                    for i, item in enumerate(result):
+                    for i, item in tqdm(enumerate(result)):
                         self.__now.append(self.__ytinfo['entries'][i]['title'])
                         self.__songs[self.__ytinfo['entries'][i]['title']] = self.__ytinfo['entries'][i]['url']
                 else:
@@ -86,8 +86,7 @@ class ytMusic(commands.Cog):
                 await asyncio.sleep(self.dur + 10)
                 self.__prev.append(self.__now.popleft())
             else:
-                await ctx.send("봇이 음성채널에 없습니다. 🙅")
-                return
+                return await ctx.send("봇이 음성채널에 없습니다. 🙅")
 
     @commands.command()
     async def play(self, ctx, *args):
@@ -103,14 +102,26 @@ class ytMusic(commands.Cog):
                 return
             await self.__set_song_list(ctx, args_list[0])
             await ctx.send("🎧 음악 재생 시작 🎧")
-            await self.__play_song(ctx)
+            return await self.__play_song(ctx)
         else:
-            await ctx.send("\"!play | !틀어줘 [유튜브 링크]\"를 입력해주세요")
-            return
+            return await ctx.send("\"!play | !틀어줘 [유튜브 링크]\"를 입력해주세요")
+
 
     @commands.command(name="틀어줘")
     async def playkor(self,ctx):
-        await self.play.invoke(ctx)
+        return await self.play.invoke(ctx)
+
+    @commands.command()
+    async def volume(self, ctx, volume: int): # from discord.py example
+        if self.__bot_voice is None:
+            return await ctx.send("봇이 음성채널에 없습니다. 🙅")
+
+        self.__bot_voice.source.volume = volume / 100
+        return await ctx.send(f"현재 음량 : {volume}%")
+
+    @commands.command(name = "크기")
+    async def korvol(self, ctx):
+        return await self.korvol.invoke(ctx)
 
     @commands.command()
     async def nowplay(self,ctx):

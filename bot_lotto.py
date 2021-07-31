@@ -1,29 +1,55 @@
-import os, datetime as dt
+import json, datetime as dt, heapq as pq, io
 
-import pandas as pd, numpy as np, discord
+import pandas as pd, numpy as np, discord, requests
 from discord.ext import commands
 
 class bot_lottery(commands.Cog):
     def __init__(self, bot):
         self.__bot = bot
         self.__latest = pd.read_csv('latest_data.csv')
+        self.__seed = dt.datetime.fromisoformat(self.__latest['date'][0]).timestamp()
 
-    def get_latest(self):
-        due_8 = 691_200.0 # 3600 * 24 * 8
-        new_round = 0
+    def __get_latest(self, now_date):
+        lotto_url = "https://www.dhlottery.co.kr/common.do?method=getLottoNumber&drwNo={}"
         last_round = self.__latest['round'][0]
-        last_date = dt.datetime.fromisoformat(self.__latest['date'][0]).timestamp()
-        if last_round < new_round and abs(last_date - dt.datetime.now().timestamp()) > due_8:
-            renew_date = dt.datetime.fromtimestamp(last_date + 604_800.0) # 3600 * 24 * 7
-            self.__latest['date'][0] = renew_date
-            self.__latest['round'][0] = new_round
+        last_date = self.__seed
+        if abs(now_date - last_date) > 691_200:
+            get_latest = requests.get(lotto_url.format(last_round + 1))
+            parsed_get = get_latest.json()
+            if parsed_get['returnValue'] == "success":
+                self.__seed = dt.datetime.fromtimestamp(last_date + 604_800.0)  # 3600 * 24 * 7
+                self.__latest['date'][0] = parsed_get['drwNoDate']
+                self.__latest['round'][0] = parsed_get['drwNo']
+                return True
+        return False
 
-        pass
+        # if last_round < new_round and abs(last_date - dt.datetime.now().timestamp()) > due_8:
+    @commands.command()
+    async def lotto(self, ctx):
+        win_q = []
+        msg, msgs = [], []
+        now_date = dt.datetime.now().timestamp()
+        pq.heapify(win_q)
+        if self.__get_latest(now_date):
+            await ctx.send("새로운 당첨 번호가 나왔습니다. 결과 반영중...")
+        else:
+            await ctx.send("새로운 당첨 번호가 나오지 않았습니다.")
+            await ctx.send(f"{self.__latest['round'][0]}회차 당첨 번호까지 봤을 때...")
+            max_n = np.int64(10_0000_0000)
+            np.random.seed(int(self.__seed))
+            rand_num = np.random.binomial(max_n, 1/8_145_060, size = (5, 45))
+            for arr in rand_num:
+                for i, cnt in enumerate(arr, 1):
+                    pq.heappush(win_q, (-cnt, i))
+                while win_q:
+                    if len(msg) == 6:
+                        msg = "\t> **{}**\n".format("\t".join(msg))
+                        msgs.append(msg)
+                        msg = []
+                        break
+                    msg.append(str(pq.heappop(win_q)[1]))
+            await ctx.send('\n'.join(msgs))
 
-    def get_avg_stddev(self):
-        LOT_NUM = 45
-        pos_arr = np.array([1 / LOT_NUM] * LOT_NUM, dtype=np.float64)
-        tot_cnt = np.array(self.__latest.iloc[0][2:])
 
 if __name__ == '__main__':
     import app

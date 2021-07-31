@@ -29,6 +29,8 @@
      * Play next one if playlist is playing on.
 
 
+
+
 2. 이번주 로또번호는??? (__개발중__)
         
    > !로또 | !lotto
@@ -37,12 +39,16 @@
        * Tell expected 1st Win Korean Lottery number this week
 
 
+
+
 3. 룰렛!
 
    > !룰렛 요소1, 요소2, 요소3... | !roll ele1, ele2, ele3...
 
    - 임의로 하나를 선택해줍니다.
        * Choose one among what you enter elements
+
+
     
     
 4. 개발자 이메일 | Developer E-mail
