@@ -22,6 +22,7 @@ class bot_lottery(commands.Cog):
                 self.__seed = dt.datetime.fromtimestamp(last_date + 604_800.0)  # 3600 * 24 * 7
                 self.__latest['date'][0] = parsed_get['drwNoDate']
                 self.__latest['round'][0] = parsed_get['drwNo']
+                self.__latest.to_csv('latest_data.csv')
                 return True
         return False
 
