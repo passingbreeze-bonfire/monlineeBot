@@ -7,7 +7,6 @@ class bot_lottery(commands.Cog):
     def __init__(self, bot):
         self.__bot = bot
         self.__latest = pd.read_csv('latest_data.csv')
-        self.__tot_cnt = np.array(self.__latest.iloc[0][2:])
 
     def get_latest(self):
         due_8 = 691_200.0 # 3600 * 24 * 8
@@ -24,7 +23,7 @@ class bot_lottery(commands.Cog):
     def get_avg_stddev(self):
         LOT_NUM = 45
         pos_arr = np.array([1 / LOT_NUM] * LOT_NUM, dtype=np.float64)
-
+        tot_cnt = np.array(self.__latest.iloc[0][2:])
 
 if __name__ == '__main__':
     import app
