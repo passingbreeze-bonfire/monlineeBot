@@ -45,7 +45,7 @@ class bot_lottery(commands.Cog):
                     pq.heappush(win_q, (-cnt, i))
                 while win_q:
                     if len(msg) == 6:
-                        msg = "\t> **{}**".format("\t".join(msg))
+                        msg = "\t> **{:<3}**".format("\t".join(msg))
                         msgs.append(msg)
                         msg = []
                         break
