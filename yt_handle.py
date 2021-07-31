@@ -1,7 +1,8 @@
-from discord.ext import commands
 from collections import deque
-import io, discord, asyncio, random, time, re
-import youtube_dl
+import io, asyncio, random, time, re
+
+from discord.ext import commands
+import discord, youtube_dl
 
 
 class ytMusic(commands.Cog):
@@ -29,20 +30,15 @@ class ytMusic(commands.Cog):
             }],
         }
         self.__ytinfo = None
-        self.__bot_token = "NzU0OTAyNzcwNTA2NzkzMDIx.X17f_Q.NWy2xds0lHO5NnFGQOJn_lN1H8s"
 
-    def __bot_msg_wrapper(self, ctx, msg):
-        async def bot_msg(ctx, msg):
-            await ctx.send(msg)
+    def get_song_list(self):
+        return self.__now
 
     async def stop_song(self):
         self.__songs.clear()
         self.__now.clear()
         self.__prev.clear()
         await self.__bot_voice.disconnect()
-
-    def get_song_list(self):
-        return self.__now
 
     async def __ytDownload(self, url):
         with youtube_dl.YoutubeDL(self.__opt) as ydl:

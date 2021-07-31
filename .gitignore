@@ -116,3 +116,12 @@ exapp.py
 
 # log files
 logs/
+
+# aws keyfile
+*.pem
+
+# env file
+*.env
+
+# csv file
+*.csv

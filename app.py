@@ -1,12 +1,13 @@
 # ==================================== Outer Space ==========================================
 import discord
 from discord.ext import commands
-import asyncio, random
-import yt_handle
+from dotenv import load_dotenv
+import asyncio, random, os
+import yt_handle, bot_lotto
 
+load_dotenv(verbose=True)
 intents = discord.Intents.default()
 bot = commands.Bot(command_prefix = commands.when_mentioned_or("!"), intents=intents)
-bot_token = "NzU0OTAyNzcwNTA2NzkzMDIx.X17f_Q.NWy2xds0lHO5NnFGQOJn_lN1H8s"
 # ====================================== Bot part ===========================================
 
 @bot.event
@@ -24,7 +25,7 @@ async def on_disconnect():
     if bot.is_closed():
         bot.clear()
         await asyncio.sleep(10)
-        await bot.start(token = bot_token)
+        await bot.start(os.getenv('BOT_TOKEN'))
 
 @bot.event
 async def on_message(message):
@@ -54,5 +55,5 @@ async def korroll(ctx):
 # ================================================================================================
 if __name__ == '__main__':
     bot.add_cog(yt_handle.ytMusic(bot))
-    bot.run(bot_token)
-    # https://discord.com/api/oauth2/authorize?client_id=754902770506793021&permissions=36700672&scope=bot
+    bot.add_cog(bot_lotto.bot_lottery(bot))
+    bot.run(os.getenv('BOT_TOKEN'))
