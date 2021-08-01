@@ -14,7 +14,7 @@ class bot_lottery(commands.Cog):
         lotto_url = "https://www.dhlottery.co.kr/common.do?method=getLottoNumber&drwNo={}"
         last_round = self.__latest['round'][0]
         last_date = self.__seed
-        if abs(now_date - last_date) > 691_200:
+        if abs(now_date - last_date) > 691_200: # 3600 * 24 * 8
             self.__gen = False
             get_latest = requests.get(lotto_url.format(last_round + 1))
             parsed_get = get_latest.json()
