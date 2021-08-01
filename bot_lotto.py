@@ -19,10 +19,10 @@ class bot_lottery(commands.Cog):
             get_latest = requests.get(lotto_url.format(last_round + 1))
             parsed_get = get_latest.json()
             if parsed_get['returnValue'] == "success":
-                self.__seed = dt.datetime.fromtimestamp(last_date + 604_800.0)  # 3600 * 24 * 7
-                self.__latest['date'][0] = parsed_get['drwNoDate']
-                self.__latest['round'][0] = parsed_get['drwNo']
-                self.__latest.to_csv('latest_data.csv')
+                self.__seed = last_date + 604_800.0  # 3600 * 24 * 7
+                self.__latest['date'] = parsed_get['drwNoDate']
+                self.__latest['round'] = parsed_get['drwNo']
+                self.__latest.to_csv('latest_data.csv', index=False)
                 return True
         return False
 
@@ -34,8 +34,9 @@ class bot_lottery(commands.Cog):
             await ctx.send("새로운 당첨 번호가 나왔습니다. 결과 반영중...")
         else:
             await ctx.send("새로운 당첨 번호가 나오지 않았습니다.")
-        await ctx.send(f"{self.__latest['round'][0]}회차 당첨 번호까지 봤을 때...")
+        await ctx.send(f"{self.__latest['round'][0] + 1}회차 추첨 예상 번호를 뽑습니다...")
         if not (os.path.exists('last_result.npy') and self.__gen):
+            await ctx.send("회차 갱신으로 새로 뽑습니다")
             max_n = np.int64(10_0000_0000)
             np.random.seed(int(self.__seed))
             rand_num = np.random.binomial(max_n, 1/8_145_060, size = (5, 45))
@@ -54,6 +55,7 @@ class bot_lottery(commands.Cog):
             np.save('last_result.npy', np.array(msgs, dtype=np.str))
             self.__gen = True
         else:
+            await ctx.send("회차 갱신되지 않았으므로 갱신된 번호를 보여드립니다.")
             msgs = np.load('last_result.npy')
         await ctx.send('\n'.join(msgs))
 
@@ -61,4 +63,4 @@ class bot_lottery(commands.Cog):
 if __name__ == '__main__':
     import app
     exp = bot_lottery(app.bot)
-    exp.get_latest()
+    exp.get_latest(dt.datetime.now().timestamp())

@@ -85,6 +85,3 @@
     async def show_prev(self, ctx):
         await ctx.send(self.__prev)
 '''
-''' -2
-
-'''
