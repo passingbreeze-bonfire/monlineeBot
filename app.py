@@ -41,7 +41,6 @@ async def on_message(message):
         if message.content.startswith(trigger):
             msg = await bot.wait_for('message', check=check)
             return await channel.send(f"{msg_table[msg]}")
-    return await channel.send("등록된 말이 없습니다.")
 
 @bot.command(name='botman')
 async def bot_manual(ctx):

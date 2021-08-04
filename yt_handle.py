@@ -41,7 +41,7 @@ class ytMusic(commands.Cog):
         await self.__bot_voice.disconnect()
 
     async def __ytDownload(self, url):
-        async with youtube_dl.YoutubeDL(self.__opt) as ydl:
+        with youtube_dl.YoutubeDL(self.__opt) as ydl:
             self.__ytinfo = ydl.extract_info(url, download=False)
             print(self.__ytinfo)
             return self.chk_err > 0
