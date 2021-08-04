@@ -128,3 +128,7 @@ logs/
 
 # numpy file
 *.npy
+*.npz
+
+# json file
+*.json

@@ -113,15 +113,16 @@ class ytMusic(commands.Cog):
 
     @commands.command()
     async def volume(self, ctx, volume: int): # from discord.py example
-        if self.__bot_voice is None:
-            return await ctx.send("봇이 음성채널에 없습니다. 🙅")
-
-        self.__bot_voice.source.volume = volume / 100
+        if ctx.voice_client is None:
+            return await ctx.send("음성채널에 없습니다. 🙅")
+        elif volume < 0 or volume > 100:
+            return await ctx.send("0 ~ 100 사이의 숫자를 입력하세요.")
+        ctx.voice_client.source.volume = volume / 100
         return await ctx.send(f"현재 음량 : {volume}%")
 
-    @commands.command(name = "크기")
-    async def korvol(self, ctx):
-        return await self.korvol.invoke(ctx)
+    @commands.command(name = "음량")
+    async def korvol(self, ctx, volume: int):
+        return await self.volume.invoke(ctx, volume)
 
     @commands.command()
     async def nowplay(self,ctx):
@@ -134,19 +135,43 @@ class ytMusic(commands.Cog):
                 for idx in range(1, len(self.__now)):
                     strbuf.write("> {}.\t{}\n".format(idx, self.__now[idx]))
             plist = strbuf.getvalue()
-        await ctx.send(plist)
+        return await ctx.send(plist)
 
     @commands.command()
     async def stop(self, ctx):
         if self.__bot_voice and self.__bot_voice.is_connected():
             await ctx.send("재생을 멈춥니다.")
-            await self.stop_song()
+            return await self.stop_song()
         else:
-            await ctx.send("음성채널에 없습니다. 🙅")
+            return await ctx.send("음성채널에 없습니다. 🙅")
 
     @commands.command(name="그만")
     async def stopkor(self, ctx):
-        await self.stop.invoke(ctx)
+        return await self.stop.invoke(ctx)
+
+    @commands.command()
+    async def pause(self, ctx):
+        if self.__bot_voice and self.__bot_voice.is_connected() and self.__bot_voice.is_playing():
+            await ctx.send("재생을 잠시 멈춥니다.")
+            return await self.__bot_voice.pause()
+        else:
+            return await ctx.send("재생중이지 않거나 음성채널에 없습니다. 🙅")
+
+    @commands.command(name="잠깐")
+    async def korpause(self, ctx):
+        return await self.pause.invoke(ctx)
+
+    @commands.command(name="resume")
+    async def resume_bot(self, ctx):
+        if self.__bot_voice and self.__bot_voice.is_connected() and self.__bot_voice.is_paused():
+            await ctx.send("재생을 재개합니다.")
+            return await self.__bot_voice.resume()
+        else:
+            return await ctx.send("재생중이지 않거나 음성채널에 없습니다. 🙅")
+
+    @commands.command(name="다시")
+    async def korresume(self, ctx):
+        return await self.resume_bot.invoke(ctx)
 
     @commands.command()
     async def prev(self, ctx):
@@ -155,16 +180,15 @@ class ytMusic(commands.Cog):
                 self.__bot_voice.stop()
                 await ctx.send(f"이전 음악을 재생합니다. ➡️ 🎵 🎶 *{self.__prev[-1]}*\n")
                 self.__now.appendleft(self.__prev.pop())
-                await self.__play_song(ctx)
+                return await self.__play_song(ctx)
             else:
-                await ctx.send("현재 음악을 재생하고 있지 않습니다. 🙅")
-                return
+                return await ctx.send("현재 음악을 재생하고 있지 않습니다. 🙅")
         else:
-            await ctx.send("이전에 들었던 음악이 없습니다. ️🙅")
+            return await ctx.send("이전에 들었던 음악이 없습니다. ️🙅")
 
     @commands.command(name="이전")
     async def korprev(self, ctx):
-        await self.prev.invoke(ctx)
+        return await self.prev.invoke(ctx)
 
     @commands.command()
     async def next(self, ctx):
@@ -173,28 +197,27 @@ class ytMusic(commands.Cog):
                 self.__bot_voice.stop()
                 await ctx.send(f"다음 음악을 재생합니다. ➡️ 🎵 🎶 *{self.__now[1]}*\n")
                 self.__prev.append(self.__now.popleft())
-                await self.__play_song(ctx)
+                return await self.__play_song(ctx)
             else:
-                await ctx.send("현재 음악을 재생하고 있지 않습니다. 🙅")
-                return
+                return await ctx.send("현재 음악을 재생하고 있지 않습니다. 🙅")
         else:
-            await ctx.send("다음 음악이 없습니다. ️🙅")
+            return await ctx.send("다음 음악이 없습니다. ️🙅")
 
     @commands.command(name="다음")
     async def nextkor(self, ctx):
-        await self.next.invoke(ctx)
+        return await self.next.invoke(ctx)
 
     @commands.command()
     async def shuffle(self, ctx):
         if self.__bot_voice and self.__bot_voice.is_playing():
             if len(self.__now) > 2:
-                await ctx.send("🎶 플레이리스트가 흔들립니다!! 🎶")
                 random.shuffle(self.__now[1:])
+                return await ctx.send("🎶 플레이리스트가 흔들립니다!! 🎶")
             else:
-                await ctx.send("흔들릴 플레이리스트가 없습니다. 🙅")
+                return await ctx.send("흔들릴 플레이리스트가 없습니다. 🙅")
         else:
-            await ctx.send("현재 음악을 재생하고 있지 않습니다. 🙅")
-            return
+            return await ctx.send("현재 음악을 재생하고 있지 않습니다. 🙅")
+
 
     @commands.command(name="셔플")
     async def korshuffle(self, ctx):
@@ -204,18 +227,18 @@ class ytMusic(commands.Cog):
     async def repeat(self, ctx, arg="0"):
         total_songs = list(self.__songs.keys())
         if arg == "0" or arg == "1":
-            await ctx.send("플레이리스트를 반복합니다.")
             self.__now +=  total_songs * 10
+            return await ctx.send("플레이리스트를 반복합니다.")
         else:
             if isinstance(int(arg), int):
-                await ctx.send(f"플레이리스트를 {arg}번 반복합니다.")
                 self.__now += total_songs * int(arg)
+                return await ctx.send(f"플레이리스트를 {arg}번 반복합니다.")
             else:
-                await ctx.send("반복횟수를 잘못 입력하셨습니다. 🙅")
+                return await ctx.send("반복횟수를 잘못 입력하셨습니다. 🙅")
 
     @commands.command(name="반복")
     async def korrepeat(self, ctx, arg):
-        await self.repeat.invoke(ctx, arg)
+        return await self.repeat.invoke(ctx, arg)
 
 class ytLogger:
     def __init__(self, ytm: ytMusic):
