@@ -74,10 +74,9 @@ class ytMusic(commands.Cog):
             return -1
 
     async def __play_song(self, ctx):
-        while self.__now:
+        while True:
             title = self.__now[0]
             self.__now_title = title
-            self.__prev.append(title)
             if await self.__ytDownload(self.__songs[title]):
                 print(f'duration : {self.dur}')
                 if self.__bot_voice and self.__bot_voice.is_connected():
@@ -85,16 +84,16 @@ class ytMusic(commands.Cog):
                     self.__bot_voice.play(discord.FFmpegOpusAudio(self.__ytinfo['formats'][0]['url'],
                                                                   before_options="-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5",
                                                                   options="-vn"), after=lambda e: time.sleep(5))
-                    if self.__now :
-                        await asyncio.sleep(self.dur + 10)
-                        self.__prev.append(self.__now.popleft())
-                    else:
-                        self.__bot_voice.stop()
-                        return await ctx.send("모든 음악의 재생이 끝났습니다.")
                 else:
                     return await ctx.send("봇이 음성채널에 없습니다. 🙅")
             else:
                 return await ctx.send("음원을 가져올 수 있는 링크가 없습니다. ️🙅")
+            if self.__now:
+                await asyncio.sleep(self.dur + 10)
+                self.__prev.append(self.__now.popleft())
+            else:
+                self.__bot_voice.stop()
+                return await ctx.send("모든 음악의 재생이 끝났습니다.")
 
     @commands.command()
     async def play(self, ctx, *args):
