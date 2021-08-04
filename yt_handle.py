@@ -43,7 +43,7 @@ class ytMusic(commands.Cog):
     async def __ytDownload(self, url):
         with youtube_dl.YoutubeDL(self.__opt) as ydl:
             self.__ytinfo = ydl.extract_info(url, download=False)
-            print(self.__ytinfo)
+            # print(self.__ytinfo)
             return self.chk_err > 0
 
     async def __set_song_list(self, ctx, url):
@@ -62,6 +62,7 @@ class ytMusic(commands.Cog):
                         self.__songs[self.__ytinfo['entries'][i]['title']] = self.__ytinfo['entries'][i]['url']
                 else:
                     await ctx.send("준비 중...")
+                    self.dur = self.__ytinfo['duration']
                     self.__now.append(self.__ytinfo['title'])
                     self.__songs[self.__ytinfo['title']] = self.__ytinfo['webpage_url']
                 return 0
