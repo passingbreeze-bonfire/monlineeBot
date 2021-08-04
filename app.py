@@ -19,7 +19,7 @@ async def on_command_error(ctx, error):
 
 @bot.event
 async def on_ready(ctx):
-    print(f"bot ID : {bot.user} => Log in Successfully!")
+    print(f"{dt.datetime.now()} : {bot.user} => Log in Successfully!")
     return await ctx.send("Bot Online!")
 
 @bot.event
