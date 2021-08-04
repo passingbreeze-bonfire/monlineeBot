@@ -15,12 +15,11 @@ bot = commands.Bot(command_prefix = commands.when_mentioned_or("!"), intents=int
 async def on_command_error(ctx, error):
     return await ctx.send("😱 없는 명령어입니다. 😱")\
         if isinstance(error, commands.CommandNotFound)\
-        else print(f"{dt.datetime.now()} : {ctx.content}") # Bot Command Time Log
+        else print(f"{dt.datetime.now()} : {ctx.command}") # Bot Command Time Log
 
 @bot.event
-async def on_ready(ctx):
+async def on_ready():
     print(f"{dt.datetime.now()} : {bot.user} => Log in Successfully!")
-    return await ctx.send("Bot Online!")
 
 @bot.event
 async def on_disconnect():
