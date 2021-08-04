@@ -43,8 +43,8 @@ async def on_message(message):
             return await channel.send(f"{msg_table[msg]}")
     return await channel.send("등록된 말이 없습니다.")
 
-@bot.command()
-async def help(ctx):
+@bot.command(name='help')
+async def help_bot(ctx):
     return await ctx.send('''
     1. __ !틀어줘 *유튜브 링크* | !play *youtube link* __
         - 유튜브 링크가 아니면 동작하지 않습니다
@@ -96,7 +96,7 @@ async def help(ctx):
 
 @bot.command(name = "도움")
 async def korhelp(ctx):
-    return await help.invoke(ctx)
+    return await help_bot.invoke(ctx)
 
 @bot.command(name = "roll")
 async def roll(ctx, *args):
