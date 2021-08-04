@@ -31,7 +31,7 @@ async def on_disconnect():
 
 @bot.event
 async def on_message(message):
-    await bot.process_commands(message)
+    await bot.process_commands(message) # bot event와 command를 같이 쓰기위해 필수로 넣어야
     with open("bot_msg.json") as msg_json:
         msg_table = json.load(msg_json)
     check = lambda m: m.channel == channel and m.content in msg_table
@@ -43,7 +43,6 @@ async def on_message(message):
             msg = await bot.wait_for('message', check=check)
             return await channel.send(f"{msg_table[msg]}")
     return await channel.send("등록된 말이 없습니다.")
-# bot event와 command를 같이 쓰기위해 필수로 넣어야
 
 @bot.command()
 async def help(ctx):
