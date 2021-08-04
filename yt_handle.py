@@ -43,6 +43,7 @@ class ytMusic(commands.Cog):
     async def __ytDownload(self, url):
         async with youtube_dl.YoutubeDL(self.__opt) as ydl:
             self.__ytinfo = ydl.extract_info(url, download=False)
+            print(self.__ytinfo)
             return self.chk_err > 0
 
     async def __set_song_list(self, ctx, url):
