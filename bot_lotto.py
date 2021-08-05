@@ -1,6 +1,6 @@
-import json, datetime as dt, heapq as pq, os
+import datetime as dt, heapq as pq, os
 
-import pandas as pd, numpy as np, discord, requests
+import pandas as pd, numpy as np, requests
 from discord.ext import commands
 
 class bot_lottery(commands.Cog):
