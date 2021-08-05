@@ -30,9 +30,6 @@ class ytMusic(commands.Cog):
         }
         self.__ytinfo = None
 
-    def get_song_list(self):
-        return self.__now
-
     def __ytDownload(self, url):
         with youtube_dl.YoutubeDL(self.__opt) as ydl:
             self.__ytinfo = ydl.extract_info(url, download=False)
