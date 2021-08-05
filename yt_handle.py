@@ -112,15 +112,18 @@ class ytMusic(commands.Cog):
     @commands.command()
     async def nowplay(self,ctx):
         plist = ""
-        with io.StringIO() as strbuf:
-            strbuf.write("> **🎙 Now Playing.. 🎙**\n")
-            strbuf.write(f"> *{self.__now_title}*\n\n")
-            if self.__now :
-                strbuf.write("> **💿 Playlist 💿**\n")
-                for idx in range(1, len(self.__now)):
-                    strbuf.write("> {}.\t{}\n".format(idx, self.__now[idx]))
-            plist = strbuf.getvalue()
-        return await ctx.send(plist)
+        if self.__bot_voice and self.__bot_voice.is_connected():
+            with io.StringIO() as strbuf:
+                strbuf.write("> **🎙 Now Playing.. 🎙**\n")
+                strbuf.write(f"> *{self.__now_title}*\n\n")
+                if self.__now :
+                    strbuf.write("> **💿 Playlist 💿**\n")
+                    for idx in range(1, len(self.__now)):
+                        strbuf.write("> {}.\t{}\n".format(idx, self.__now[idx]))
+                plist = strbuf.getvalue()
+            return await ctx.send(plist)
+        else:
+            return await ctx.send("재생중이지 않거나 음성채널에 없습니다. 🙅")
 
     @commands.command()
     async def stop(self, ctx):
