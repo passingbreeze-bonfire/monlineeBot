@@ -78,7 +78,7 @@ class ytMusic(commands.Cog):
             else:
                 return await ctx.send("플레이리스트 중에 재생할 수 없는 링크가 있습니다. ️🙅")
         else:
-            self.__bot_voice.stop()
+            await self.stop_song()
             return await ctx.send("모든 음악의 재생이 끝났습니다.")
 
     @commands.command()
