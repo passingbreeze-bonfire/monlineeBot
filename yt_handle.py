@@ -96,7 +96,8 @@ class ytMusic(commands.Cog):
                 await ctx.send("🎧 음악 재생 시작 🎧")
                 return await self.__play_song(ctx)
             else:
-                return await ctx.send("재생할 수 있는게 없습니다.️ 🙅")
+                await ctx.send("재생할 수 있는게 없습니다.️ 🙅")
+                return await self.stop_song()
         else:
             return await ctx.send("\"!play | !틀어줘 [유튜브 링크]\"를 입력해주세요")
 
