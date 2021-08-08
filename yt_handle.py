@@ -30,7 +30,7 @@ class ytMusic(commands.Cog):
         }
         self.__ytinfo = None
 
-    def __ytDownload(self, url):
+    async def __ytDownload(self, url):
         with youtube_dl.YoutubeDL(self.__opt) as ydl:
             self.__ytinfo = ydl.extract_info(url, download=False)
             # print(self.__ytinfo)
@@ -43,7 +43,7 @@ class ytMusic(commands.Cog):
         return await self.__bot_voice.disconnect()
 
     async def __set_song_list(self, ctx, url):
-        if self.__ytDownload(url):
+        if await self.__ytDownload(url):
             if self.__ytinfo is not None:
                 if isinstance(self.__ytinfo, dict):
                     if 'entries' in self.__ytinfo:
@@ -64,7 +64,7 @@ class ytMusic(commands.Cog):
         while self.__now:
             title = self.__now[0]
             self.__now_title = title
-            if self.__ytDownload(self.__songs[title]):
+            if await self.__ytDownload(self.__songs[title]):
                 print(f'duration : {self.dur}')
                 if self.__bot_voice and self.__bot_voice.is_connected():
                     await ctx.send(f"🎶 ~ {self.__now_title} ~ 🎶")
