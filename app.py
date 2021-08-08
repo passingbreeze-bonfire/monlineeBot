@@ -45,8 +45,8 @@ async def on_message(message):
 
 @bot.command(name='botman')
 async def bot_manual(ctx):
-    return await ctx.send('''
-    >>>1. __!틀어줘__ *유튜브 링크* | __!play__ *youtube link*
+    return await ctx.send('''```
+        1. __!틀어줘__ *유튜브 링크* | __!play__ *youtube link*
             - 유튜브 링크가 아니면 동작하지 않습니다
                 * Youtube link Only
        
@@ -92,7 +92,7 @@ async def bot_manual(ctx):
     4. 개발자 이메일 | Developer E-mail
         - jeongmin1237@gmail.com
     
-    ''')
+    ```''')
 
 @bot.command(name = "roll")
 async def roll(ctx, *args):
