@@ -41,10 +41,11 @@ class bot_lottery(commands.Cog):
             await ctx.send("새로운 당첨 번호가 나왔습니다. 결과 반영중...")
         else:
             await ctx.send("새로운 당첨 번호가 나오지 않았습니다.")
-        await ctx.send("{} : {}회차 추첨 번호는 \n> **{: >2}   {: >2}   {: >2}   {: >2}   {: >2}   {: >2}**\n"\
-                       .format(self.__latest['date'], self.__latest['round'][0],
-                               self.__latest['1st'], self.__latest['2nd'], self.__latest['3rd'],
-                               self.__latest['4th'], self.__latest['5th'], self.__latest['6th']))
+        print(self.__latest)
+        await ctx.send("{} : {}회차 추첨 번호는 \n> **{: >2}   {: >2}   {: >2}   {: >2}   {: >2}   {: >2}   bonus : {: >2}**\n"\
+                       .format(self.__latest['date'][0], self.__latest['round'][0],
+                               self.__latest['1st'][0], self.__latest['2nd'][0], self.__latest['3rd'][0],
+                               self.__latest['4th'][0], self.__latest['5th'][0], self.__latest['6th'][0], self.__latest['bonus'][0]))
         await ctx.send(f"{self.__latest['round'][0] + 1}회차 추첨 예상 번호를 뽑습니다...")
         if not (os.path.exists('last_result.npy') and self.__gen):
             await ctx.send("회차 갱신으로 새로 뽑습니다")

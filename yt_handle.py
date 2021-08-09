@@ -1,5 +1,5 @@
 from collections import deque, OrderedDict
-import io, asyncio, random, time, re
+import io, asyncio, random, time, re, datetime as dt
 
 import discord, youtube_dl
 from discord.ext import commands
@@ -10,6 +10,7 @@ class ytMusic(commands.Cog):
         self.chk_err : bool = True
         self.__bot = bot
         self.__bot_voice = None
+        self.__pbegin, self.__pend = 0, 0
         self.__songs = OrderedDict()
         self.__now, self.__prev = deque(), deque()
         self.__now_title = ""
@@ -138,6 +139,7 @@ class ytMusic(commands.Cog):
     async def pause(self, ctx):
         if self.__bot_voice and self.__bot_voice.is_connected() and self.__bot_voice.is_playing():
             await ctx.send("재생을 잠시 멈춥니다.")
+            self.__pbegin = dt.datetime.now().timestamp()
             return await self.__bot_voice.pause()
         else:
             return await ctx.send("재생중이지 않거나 음성채널에 없습니다. 🙅")
@@ -146,7 +148,9 @@ class ytMusic(commands.Cog):
     async def resume_bot(self, ctx):
         if self.__bot_voice and self.__bot_voice.is_connected() and self.__bot_voice.is_paused():
             await ctx.send("재생을 재개합니다.")
-            return await self.__bot_voice.resume()
+            self.__pend = dt.datetime.now().timestamp()
+            await self.__bot_voice.resume()
+            return await asyncio.sleep(self.dur + (self.__pend - self.__pbegin))
         else:
             return await ctx.send("재생중이지 않거나 음성채널에 없습니다. 🙅")
 
@@ -207,6 +211,10 @@ class ytMusic(commands.Cog):
     @commands.command(name = "음량")
     async def kor_vol(self, ctx, volume: int):
         return await self.volume.invoke(ctx, volume)
+
+    @commands.command(name="지금")
+    async def kor_vol(self, ctx):
+        return await self.nowplay.invoke(ctx)
 
     @commands.command(name="이전")
     async def kor_prev(self, ctx):

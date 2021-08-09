@@ -46,52 +46,52 @@ async def on_message(message):
 @bot.command(name='botman')
 async def bot_manual(ctx):
     return await ctx.send('''```
-        1. __!틀어줘__ *유튜브 링크* | __!play__ *youtube link*
-            - 유튜브 링크가 아니면 동작하지 않습니다
-                * Youtube link Only
-       
-            - 유튜브에서 듣고싶은 음악 혹은 플레이리스트를 찾아서 틀어줍니다. 라디오 모드로 링크가 재생됩니다.
-                * Find music or playlist what you wanna play in Youtube, playing it only radio mode        
+    1. !틀어줘 *유튜브 링크* | !play *youtube link*
+        - 유튜브 링크가 아니면 동작하지 않습니다
+            * Youtube link Only
+   
+        - 유튜브에서 듣고싶은 음악 혹은 플레이리스트를 찾아서 틀어줍니다. 라디오 모드로 링크가 재생됩니다.
+            * Find music or playlist what you wanna play in Youtube, playing it only radio mode        
 
-            1-1. __!지금__ | __!nowplay__
-                - 봇이 재생중이라면 현재 재생중인 음악을 보여줍니다. 플레이리스트라면 플레이리스트까지 보여줍니다.
-                    * Show what bot plays now. If bot plays playlist, show all list. 
+        1-1. !지금 | !nowplay
+            - 봇이 재생중이라면 현재 재생중인 음악을 보여줍니다. 플레이리스트라면 플레이리스트까지 보여줍니다.
+                * Show what bot plays now. If bot plays playlist, show all list. 
+
+        1-2. !이전 | !prev
+            - 재생중인 플레이리스트가 있다면 이전 재생했던 음악을 재생합니다.
+                * Play previous one if your playlist is playing on. 
     
-            1-2. __!이전__ | __!prev__
-                - 재생중인 플레이리스트가 있다면 이전 재생했던 음악을 재생합니다.
-                    * Play previous one if your playlist is playing on. 
+        1-3. !다음 | !next   
+            - 재생중인 플레이리스트가 있다면 다음 곡을 재생합니다.
+                * Play next one if playlist is playing on.
         
-            1-3. __!다음__ | __!next__   
-                - 재생중인 플레이리스트가 있다면 다음 곡을 재생합니다.
-                    * Play next one if playlist is playing on.
+        1-4. !음량 *0 ~ 100 사이의 숫자* | !volume *0 ~ 100 integer number* 
+            - 재생중인 음악의 볼륨을 조절합니다.
+                * Control music volume.
+        
+        1-5. !잠깐 | !pause 
+            - 재생중인 음악을 일시정지합니다.
+                * Pause music if it is playing.    
+        
+        1-6. !다시 | !resume 
+            - 일시정지중인 음악을 다시 재생합니다.
+                * Resume playing music if it is paused.    
             
-            1-4. __!음량__ *0 ~ 100 사이의 숫자* | __!volume__ *0 ~ 100 integer number* 
-                - 재생중인 음악의 볼륨을 조절합니다.
-                    * Control music volume.
+        1-7. !정지 | !stop
+            - 재생중인 음악 모두를 정지합니다.
+                * Let bot stop all musics.
             
-            1-5. __!잠깐__ | __!pause__ 
-                - 재생중인 음악을 일시정지합니다.
-                    * Pause music if it is playing.    
-            
-            1-6. __!다시__ | __!resume__ 
-                - 일시정지중인 음악을 다시 재생합니다.
-                    * Resume playing music if it is paused.    
-                
-            1-7. __!정지__ | __!stop__
-                - 재생중인 음악 모두를 정지합니다.
-                    * Let bot stop all musics.
-                
-    2. __!로또__ | __!lotto__
-        - 이번주 예상 1등 로또번호를 알려줍니다.
-            * Bot expects 1st Win Korean Lottery number this week.
+2. !로또 | !lotto
+    - 이번주 예상 1등 로또번호를 알려줍니다.
+        * Bot expects 1st Win Korean Lottery number this week.
 
-    3. __!룰렛__ *요소1, 요소2, 요소3...*| __!roll__ *e1, e2, e3...*
-        - 임의로 하나를 선택해줍니다.
-            * Choose one among what you input.
-    
-    4. 개발자 이메일 | Developer E-mail
-        - jeongmin1237@gmail.com
-    
+3. !룰렛 *요소1, 요소2, 요소3...*| !roll *e1, e2, e3...*
+    - 임의로 하나를 선택해줍니다.
+        * Choose one among what you input.
+
+4. 개발자 이메일 | Developer E-mail
+    - jeongmin1237@gmail.com
+
     ```''')
 
 @bot.command(name = "roll")
