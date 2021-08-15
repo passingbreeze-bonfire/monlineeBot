@@ -32,7 +32,7 @@ async def on_disconnect():
 @bot.event
 async def on_message(message):
     await bot.process_commands(message) # bot event와 command를 같이 쓰기위해 필수로 넣어야
-    with open("bot_msg.json") as msg_json:
+    with open("bot_msg.json", encoding='utf-8') as msg_json:
         msg_table = json.load(msg_json)
     check = lambda m: m.channel == channel and m.content in msg_table
     if message.author == bot.user:

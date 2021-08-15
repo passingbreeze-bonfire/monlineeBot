@@ -50,9 +50,14 @@ class ytMusic(commands.Cog):
                     if 'entries' in self.__ytinfo:
                         await ctx.send("🎶 플레이리스트 준비 중... 🎶")
                         result = self.__ytinfo['entries']
+                        result_size = len(result)
                         for i, item in enumerate(result):
                             self.__now.append(self.__ytinfo['entries'][i]['title'])
                             self.__songs[self.__ytinfo['entries'][i]['title']] = self.__ytinfo['entries'][i]['url']
+                            if len(self.__songs) == (result_size // 4):
+                                await ctx.send("25%...")
+                            elif len(self.__songs) == (result_size // 2):
+                                await ctx.send("50%...")
                     else:
                         await ctx.send("🎶 한 곡 준비 중... 🎶")
                         self.dur = self.__ytinfo['duration']
