@@ -40,12 +40,13 @@ class bot_lottery(commands.Cog):
             if self.__chk_latest(last_round + 1):
                 predict_correct_result = []
                 await ctx.send(
-                    "새로운 당첨 번호가 나왔습니다.\n\n{} : {}회차 추첨 번호는 \n> **{: >2}   {: >2}   {: >2}   {: >2}   {: >2}   {: >2}   bonus : {: >2}**\n"\
+                    '''새로운 당첨 번호가 나왔습니다.\n\n
+                    {} : {}회차 추첨 번호는 \n> **{: >2}   {: >2}   {: >2}   {: >2}   {: >2}   {: >2}   bonus : {: >2}**\n
+                    과연... 얼마나 맞췄을지...'''\
                     .format(self.__latest['drwNoDate'], self.__latest['drwNo'],
                             self.__latest['drwtNo1'], self.__latest['drwtNo2'], self.__latest['drwtNo3'],
                             self.__latest['drwtNo4'], self.__latest['drwtNo5'], self.__latest['drwtNo6'],
                             self.__latest['bnusNo']))
-                await ctx.send("과연... 얼마나 맞췄을지...")
                 await asyncio.sleep(5)
                 latest_result = set(list(self.__latest.values())[2:])
                 for game in last_predict:
@@ -58,8 +59,7 @@ class bot_lottery(commands.Cog):
                             chk.append(num)
                     chk.append('ratio : {:.2f}%'.format(100.0 * (correct/len(game))))
                     predict_correct_result.append('   '.join(chk))
-                await ctx.send('\n'.join(predict_correct_result))
-                await ctx.send('다음 {}회차 당첨번호를 새로 예측합니다.'.format(int(self.__latest['drwNo']) + 1))
+                await ctx.send('{}\n다음 {}회차 당첨번호를 새로 예측합니다.'.format('\n'.join(predict_correct_result),int(self.__latest['drwNo']) + 1))
                 predict_new_result = self.__predict(now_date + last_date)
                 new = { k : [self.__latest[k]] for k in self.__latest }
                 np.save(npy_name, predict_new_result) # update npy
