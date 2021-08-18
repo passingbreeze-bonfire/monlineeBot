@@ -24,8 +24,8 @@ class bot_lottery(commands.Cog):
             for i, cnt in enumerate(arr, 1):
                 pq.heappush(win_q, (-cnt, i))
             while len(msg) <= 6:
-                msg.append(str(pq.heappop(win_q)[1]))
-            msgs.append(np.array(msg, dtype=np.str))
+                msg.append(pq.heappop(win_q)[1])
+            msgs.append(np.array(map(str, sorted(msg)), dtype=np.str))
         return np.array(msgs)
 
     @commands.command()
