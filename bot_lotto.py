@@ -49,7 +49,9 @@ class bot_lottery(commands.Cog):
                             self.__latest['drwtNo4'], self.__latest['drwtNo5'], self.__latest['drwtNo6'],
                             self.__latest['bnusNo']))
                 await asyncio.sleep(5)
-                latest_result = set(list(self.__latest.values())[2:])
+                latest_result = {self.__latest['drwtNo1'], self.__latest['drwtNo2'], self.__latest['drwtNo3'],
+                                 self.__latest['drwtNo4'], self.__latest['drwtNo5'], self.__latest['drwtNo6'],
+                                 self.__latest['bnusNo']}
                 for game in last_predict:
                     chk, correct = ['>'], 0
                     for num in game:
