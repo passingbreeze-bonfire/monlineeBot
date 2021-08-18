@@ -15,17 +15,18 @@ class bot_lottery(commands.Cog):
 
     def __predict(self, time_seed : int):
         msgs = []
-        max_n = np.int64(10_0000_0000)
+        DICE_CNT, LOTTO_LEN = 10_0000_0000, 6
+        max_n = np.int64(DICE_CNT)
         np.random.seed(time_seed)
         rand_num = np.random.binomial(max_n, 1 / 8_145_060, size=(5, 45))
         for arr in rand_num:
-            win_q, msg = [], ['>']
+            win_q, msg = [], []
             pq.heapify(win_q)
             for i, cnt in enumerate(arr, 1):
                 pq.heappush(win_q, (-cnt, i))
-            while len(msg) <= 6:
+            while len(msg) < LOTTO_LEN:
                 msg.append(pq.heappop(win_q)[1])
-            msgs.append(np.array(map(str, sorted(msg)), dtype=np.str))
+            msgs.append(np.array(['>'] + list(map(str, sorted(msg))), dtype=np.str))
         return np.array(msgs)
 
     @commands.command()

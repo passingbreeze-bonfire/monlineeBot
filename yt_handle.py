@@ -58,6 +58,8 @@ class ytMusic(commands.Cog):
                                 await ctx.send("25%...")
                             elif len(self.__songs) == (result_size // 2):
                                 await ctx.send("50%...")
+                        else:
+                            await ctx.send("플레이리스트 재생 준비 완료...")
                     else:
                         await ctx.send("🎶 한 곡 준비 중... 🎶")
                         self.dur = self.__ytinfo['duration']
